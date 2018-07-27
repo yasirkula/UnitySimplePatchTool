@@ -32,7 +32,7 @@ namespace SimplePatchToolUnity
 			window.titleContent = new GUIContent( "Patcher" );
 			window.minSize = new Vector2( 300f, 275f );
 
-			window.c_Name = Application.productName;
+			window.c_Name = PatchUtils.IsProjectNameValid( Application.productName ) ? Application.productName : "MyProject";
 			window.c_Version = Application.version;
 
 			window.Show();
