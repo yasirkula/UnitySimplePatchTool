@@ -1,5 +1,9 @@
 # Simple Patch Tool for Unity
 
+**Available on Asset Store:** https://www.assetstore.unity3d.com/en/#!/content/124296
+
+**Forum Thread:** https://forum.unity.com/threads/simplepatchtool-open-source-patching-solution-for-standalone-platforms.542465/
+
 This plugin is a Unity port of the [SimplePatchTool library](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications. Before using this plugin, you should first see SimplePatchTool's documentation: https://github.com/yasirkula/SimplePatchTool
 
 ## LICENSE
