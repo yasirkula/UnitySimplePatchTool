@@ -146,7 +146,7 @@ public class SelfPatchingExample : MonoBehaviour
 - set *Previous version path* as the *Build1* directory and increase the value of *Project version* (e.g. if it was *1.0*, set it to *1.1*)
 - if you attempt to create the patch now, you'll receive the following error: `ERROR: directory ...\PatchFiles is not empty`. We don't need those old patch files, so you can safely clear the *PatchFiles* directory
 - now click the **Create Patch** button and wait for the process to finish
-- upload the *PatchFiles* directory to your Drive
+- upload the *PatchFiles* directory to your Drive (simply drag&drop the directory to Drive)
 - it is time to update the download links inside *VersionInfo.info*. We can't use the *BaseDownloadURL* while hosting files on Drive, because each file's share link will contain a custom id in it. So you have two options here:
   - for each file in Drive, copy&paste the shareable link to VersionInfo (if the link contains any `&` characters, replace them with `&amp;` because otherwise, they will break the xml file) 
   - add [Download Link Generator for Drive™](https://github.com/yasirkula/DownloadLinkGeneratorForGoogleDrive) to your Drive, right click the *RepairFiles* subdirectory of the *PatchFiles* directory on Drive and select **Open with-Download Link Generator**. After it says "*Status: finished*", copy all the filenames and download links and paste them inside an empty text file on your computer. Now, open the **Update** tab of the *Simple Patch Tool* window, select the VersionInfo and the text file and click **Update Download Links**
