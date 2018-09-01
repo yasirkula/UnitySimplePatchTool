@@ -104,11 +104,11 @@ public class SelfPatchingExample : MonoBehaviour
 		patcher = new SimplePatchTool( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), versionInfoURL ).
 			UseRepair( true ).UseIncrementalPatch( true ).
 			UseCustomDownloadHandler( () => new CookieAwareWebClient() ). // to support https in Unity
-			UseCustomFreeSpaceCalculator( ( drive ) => long.MaxValue ). // DriveInfo.AvailableFreeSpace is not supported on Unity
+			UseCustomFreeSpaceCalculator( ( drive ) => long.MaxValue ). // DriveInfo.AvailableFreeSpace is not supported in Unity
 			LogProgress( true );
 
-		// true (default): only version number (e.g. 1.0) is compared with VersionInfo to see if there is an update
-		// false: hashes and sizes of the local files are compared against VersionInfo (if any file is different/missing, we'll patch the app)
+		// true (default): only version number (e.g. 1.0) is compared against VersionInfo to see if there is an update
+		// false: hashes and sizes of the local files are compared against VersionInfo (if there are any different/missing files, we'll patch the app)
 		if( patcher.CheckForUpdates( true ) )
 			StartCoroutine( CheckForUpdatesCoroutine() );
 		else
@@ -120,13 +120,15 @@ public class SelfPatchingExample : MonoBehaviour
 		while( patcher.IsRunning )
 			yield return null;
 
-		if( patcher.Result == PatchResult.Success ) // There is an update
+		if( patcher.Result == PatchResult.Success ) // there is an update
 		{
 			if( patcher.Run( true ) ) // start patching in self patching mode
 				Instantiate( patcherUiPrefab ).Initialize( patcher ); // show progress on a PatcherUI instance
 			else
 				Debug.LogError( "Something went wrong" );
 		}
+		else if( patcher.Result == PatchResult.Failed )
+				Debug.LogError( "ERROR: " + patcher.FailDetails );
 	}
 #endif
 }
@@ -148,3 +150,132 @@ public class SelfPatchingExample : MonoBehaviour
 - [update the download links inside *VersionInfo.info*](https://github.com/yasirkula/SimplePatchTool/wiki/Updating-Download-Links-in-VersionInfo)
 - update the *VersionInfo.info* that [you've initially uploaded to the server of your choice](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) with the one inside *PatchFiles* on your computer (the one with updated download links)
 - all done! Run the *Build1* version and see the magic happen!
+
+### Creating a Self-patching Launcher
+
+In this example, you will see how to create a launcher with self patching support in Unity. As before, make sure that [your target platform's self patcher executable is set up](#about-self-patcher-executable).
+
+According to [Recommended Project Structure](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure), there are some important points to consider in this example:
+
+- the main app that the launcher is supposed to update/launch should be stored in a subdirectory (let's say *MainApp*). So, if your launcher resides inside e.g. *MyGame* directory, then the main app should reside inside *MyGame/MainApp*
+- while creating patches for the main app, you should point the *Root path* and/or *Previous version path* to *MyGame/MainApp*. Steps to create patches for the main app are [pretty straightforward](#creating-a-self-patching-app), so I won't be mentioning them here
+- while creating patches for the launcher, you should point the *Root path* and/or *Previous version path* to *MyGame*. In addition, you should add `MainApp/` to the ignored paths list of the launcher's patch in order not to include that directory in the patch (it also prevents that directory from being seen as an obsolete directory while self patching the launcher). We'll see how to do it shortly
+
+After you make sure that your project is structured/will be structured like this, follow these steps to create the launcher:
+
+- create a *C#* script called *SelfPatchingLauncherExample* and add it to an **empty object** in your first scene:
+
+```csharp
+using SimplePatchToolCore;
+using SimplePatchToolUnity;
+using System.Collections;
+using System.IO;
+using UnityEngine;
+
+public class SelfPatchingLauncherExample : MonoBehaviour
+{
+	[SerializeField]
+	private string launcherVersionInfoURL;
+
+	[SerializeField]
+	private string mainAppVersionInfoURL;
+
+	[SerializeField]
+	private string mainAppSubdirectory = "MainApp";
+
+	[SerializeField]
+	private PatcherUI patcherUiPrefab;
+
+	// SimplePatchTool only works on standalone platforms
+	// Self patching is not supported on Editor
+#if !UNITY_EDITOR && UNITY_STANDALONE
+	private SimplePatchTool patcher;
+	private static bool executed = false;
+
+	private void Awake()
+	{
+		if( executed )
+		{
+			Destroy( gameObject );
+			return;
+		}
+
+		DontDestroyOnLoad( gameObject );
+		executed = true;
+
+		patcher = CreatePatcherFor( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), launcherVersionInfoURL );
+
+		// true (default): only version number (e.g. 1.0) is compared against VersionInfo to see if there is an update
+		// false: hashes and sizes of the local files are compared against VersionInfo (if there are any different/missing files, we'll patch the app)
+		if( patcher.CheckForUpdates( false ) ) // check if launcher is up-to-date
+			StartCoroutine( LauncherCheckForUpdatesCoroutine() );
+		else
+			Debug.LogError( "Something went wrong" );
+	}
+
+	private IEnumerator LauncherCheckForUpdatesCoroutine()
+	{
+		while( patcher.IsRunning )
+			yield return null;
+
+		if( patcher.Result == PatchResult.Success ) // there is an update for the launcher
+		{
+			if( patcher.Run( true ) ) // start patching the launcher in self patching mode
+				Instantiate( patcherUiPrefab ).Initialize( patcher ); // show progress on a PatcherUI instance
+			else
+				Debug.LogError( "Something went wrong" );
+		}
+		else if( patcher.Result == PatchResult.AlreadyUpToDate ) // launcher is up-to-date, check if there is an update for the main app
+		{
+			string mainAppPath = Path.Combine( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), mainAppSubdirectory );
+			patcher = CreatePatcherFor( mainAppPath, mainAppVersionInfoURL );
+
+			if( patcher.CheckForUpdates( true ) ) // compare main app's version number against its VersionInfo (pass 'false' to check the main app's file integrity)
+				StartCoroutine( MainAppCheckForUpdatesCoroutine() );
+			else
+				Debug.LogError( "Something went wrong" );
+		}
+		else
+			Debug.LogError( "ERROR: " + patcher.FailDetails );
+	}
+
+	private IEnumerator MainAppCheckForUpdatesCoroutine()
+	{
+		while( patcher.IsRunning )
+			yield return null;
+
+		if( patcher.Result == PatchResult.Success ) // there is an update for the main app
+		{
+			if( patcher.Run( false ) ) // start patching the main app via this launcher (i.e. not in self patching mode)
+				Instantiate( patcherUiPrefab ).Initialize( patcher ); // show progress on a PatcherUI instance
+			else
+				Debug.LogError( "Something went wrong" );
+		}
+		else if( patcher.Result == PatchResult.Failed )
+			Debug.LogError( "ERROR: " + patcher.FailDetails );
+	}
+
+	private SimplePatchTool CreatePatcherFor( string rootPath, string versionInfoURL )
+	{
+		return new SimplePatchTool( rootPath, versionInfoURL ).
+			UseRepair( true ).UseIncrementalPatch( true ).
+			UseCustomDownloadHandler( () => new CookieAwareWebClient() ). // to support https in Unity
+			UseCustomFreeSpaceCalculator( ( drive ) => long.MaxValue ). // DriveInfo.AvailableFreeSpace is not supported in Unity
+			LogProgress( true );
+	}
+#endif
+}
+```
+
+- follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) for the launcher and paste its VersionInfo url to **Launcher Version Info URL** in the Inspector
+- do the same for the main app, except this time paste its VersionInfo url to **Main App Version Info URL** (launcher and the main app will use two separate patches, so they should have separate VersionInfo's, as well)
+- enter the name of the subdirectory that the main app resides inside/will reside inside to the **Main App Subdirectory** variable
+- assign *Plugins/SimplePatchTool/Demo/PatcherUI* prefab to the **Patcher Ui Prefab** variable
+- after building the project, open **Window-Simple Patch Tool** and assign *MyGame* to the *Root path* variable
+- create an empty text file (let's say *ignored_files.txt*) on your computer and add this line to it: `MainApp/`
+- assign *ignored_files.txt* to the *Ignored files holder* variable (which will make sure that the MainApp directory will not be included in the launcher's patch)
+- point *Output path* to an empty directory (let's say *PatchFiles*), click the **Create Patch** button and wait for the *Operation successful...* log to appear in the console
+- [upload the *PatchFiles* directory to a server](https://github.com/yasirkula/SimplePatchTool/wiki/Hosting-Patch-Files)
+- [update the download links inside the launcher's *VersionInfo.info*](https://github.com/yasirkula/SimplePatchTool/wiki/Updating-Download-Links-in-VersionInfo)
+- update the *VersionInfo.info* of the launcher that [you've initially uploaded to the server of your choice](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) with the one inside *PatchFiles* on your computer (the one with updated download links)
+- all done! Now, if you create a new version for the launcher, then the older launcher should self patch itself. Or, if you create a new version for the main app, then the launcher should patch the main app
