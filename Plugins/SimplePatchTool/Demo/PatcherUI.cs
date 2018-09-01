@@ -1,4 +1,6 @@
-﻿using SimplePatchToolCore;
+﻿#if UNITY_EDITOR || UNITY_STANDALONE
+using SimplePatchToolCore;
+#endif
 using System.Collections;
 using System.IO;
 using UnityEngine;
@@ -8,6 +10,7 @@ namespace SimplePatchToolUnity
 {
 	public class PatcherUI : MonoBehaviour
 	{
+#if UNITY_EDITOR || UNITY_STANDALONE
 		[SerializeField]
 		private bool logToConsole = true;
 
@@ -151,5 +154,6 @@ namespace SimplePatchToolUnity
 			else
 				Destroy( gameObject );
 		}
+#endif
 	}
 }

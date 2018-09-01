@@ -1,14 +1,15 @@
-﻿using SimplePatchToolCore;
-using System.IO;
-using System;
+﻿#if UNITY_EDITOR || UNITY_STANDALONE
+using SimplePatchToolCore;
+using SimplePatchToolSecurity;
+#endif
 using UnityEngine;
 using UnityEngine.UI;
-using SimplePatchToolSecurity;
 
 namespace SimplePatchToolUnity
 {
 	public class PatcherControlPanel : MonoBehaviour
 	{
+#if UNITY_EDITOR || UNITY_STANDALONE
 		[SerializeField]
 		private PatcherUI patcherUiPrefab;
 		private PatcherUI runningPatcher;
@@ -95,5 +96,6 @@ namespace SimplePatchToolUnity
 			else
 				Debug.LogWarning( "An instance of SimplePatchTool is already running, cancel/dismiss it first!" );
 		}
+#endif
 	}
 }

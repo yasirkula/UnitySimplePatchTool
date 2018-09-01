@@ -18,19 +18,15 @@ SimplePatchTool is licensed under the [MIT License](LICENSE); however, it uses e
 
 - import **SimplePatchTool.unitypackage** to your project
 - in **Edit-Project Settings-Player**, change **Api Compatibility Level** to **.NET 2.0** or higher (i.e. don't use *.NET 2.0 Subset*)
-- you can now use **Window-Simple Patch Tool** to create/update patches, sign/verify xml files and generate RSA key pair:
+- you can now use **Window-Simple Patch Tool** to [create/update patches, sign/verify xml files and generate RSA key pair](https://github.com/yasirkula/SimplePatchTool/wiki):
 
 ![editor_window](Images/editor-window.png)
 
-**CREATE:** see https://github.com/yasirkula/SimplePatchTool#d1-creating-patches. If you'd like to use the [console app](https://github.com/yasirkula/SimplePatchTool#d1-creating-patches) to create patches, you can click the **Generate Console Command** button and copy&paste the logged *Patcher* command to the console app
-
-**UPDATE:** see https://github.com/yasirkula/SimplePatchTool#d2-updating-patches
-
-**SECURITY:** see https://github.com/yasirkula/SimplePatchTool#d3-signingverifying-patches-optional
-
-## IMPLEMENTATION
+### Updating Dll's
 
 This plugin uses SimplePatchTool's **SimplePatchToolCore** and **SimplePatchToolSecurity** modules without any modifications; so, if you want, you can make any changes to [these modules](https://github.com/yasirkula/SimplePatchTool), rebuild them and replace the dll files at *Plugins/SimplePatchTool/DLL* with their updated versions.
+
+### Unity-specific Changes
 
 To avoid any *Mono* related issues while applying patches in Unity, you should make the following changes to *SimplePatchTool* in your codes:
 
@@ -43,15 +39,11 @@ SimplePatchTool patcher = new SimplePatchTool( ... )
 .UseCustomFreeSpaceCalculator( ( drive ) => long.MaxValue );
 ```
 
-Please see *Plugins/SimplePatchTool/Demo/* for an example patcher implementation. The demo scene uses the [PatcherUI](Plugins/SimplePatchTool/Demo/PatcherUI.cs) prefab to show *SimplePatchTool*'s progress to the user:
-
-![patcher_ui](Images/patcher-ui.png)
-
-To test the demo scene with xml verification (assuming that you've signed the xml files with a private RSA key), change the extension of your public RSA key file to *.bytes* and import it to Unity. Then, assign it to the *Version Info Verifier* and/or *Patch Info Verifier* variables of the *Patcher Control Panel* object.
+### About Self Patcher Executable
 
 SimplePatchTool comes bundled with a self patcher executable on Windows platform. To add self patching support to macOS and/or Linux platforms, or to use a custom self patcher executable in your projects, you need to follow these steps:
 
-- [build the self patcher executable](https://github.com/yasirkula/SimplePatchTool#f1-creating-self-patcher-executable)
+- [build the self patcher executable](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Self-Patcher-Executable)
 - move the self patcher executable and any of its dependencies to the following directory:
   - **Windows:** Plugins/SimplePatchTool/Editor/Windows
   - **macOS:** Plugins/SimplePatchTool/Editor/OSX
@@ -63,11 +55,17 @@ SimplePatchTool comes bundled with a self patcher executable on Windows platform
 
 ## EXAMPLES
 
-### Creating a self-patching app
+### Demo Scene
 
-In this example, you will see how to add self patching support to your apps. We'll use Google Drive™ to host our files. Before starting, make sure that your target platform's self patcher executable is set up.
+Please see *Plugins/SimplePatchTool/Demo/* for an example patcher implementation. The demo scene uses the [PatcherUI](Plugins/SimplePatchTool/Demo/PatcherUI.cs) prefab to show *SimplePatchTool*'s progress to the user:
 
-SimplePatchTool uses an xml file called *VersionInfo.info* while checking for updates or applying patches. Obviously, your app needs to know where this file is hosted/will be hosted. For this reason, create an empty text file called *VersionInfo.info* and upload it to your Drive. Then right click the uploaded file, select "*Get shareable link*" and note down the share link to somewhere. Now we are ready!
+![patcher_ui](Images/patcher-ui.png)
+
+To test the demo scene with xml verification (assuming that you've [signed the xml files with a private RSA key](https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches)), change the extension of your public RSA key file to *.bytes* and import it to Unity. Then, assign it to the *Version Info Verifier* and/or *Patch Info Verifier* variables of the *Patcher Control Panel* object.
+
+### Creating a Self-patching App
+
+In this example, you will see how to add self patching support to your Unity apps. Before starting, make sure that [your target platform's self patcher executable is set up](#about-self-patcher-executable).
 
 - create a *C#* script called *SelfPatchingExample* and add it to an **empty object** in your first scene:
 
@@ -134,7 +132,7 @@ public class SelfPatchingExample : MonoBehaviour
 }
 ```
 
-- paste the Drive url of the *VersionInfo.info* file to **Version Info URL** in the Inspector
+- follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) and paste VersionInfo's url to **Version Info URL** in the Inspector
 - assign *Plugins/SimplePatchTool/Demo/PatcherUI* prefab to the **Patcher Ui Prefab** variable
 - build your project to an empty directory (let's say *Build1*)
 - open **Window-Simple Patch Tool**, click the little button next to the *Root path* variable and select the *Build1* directory
@@ -146,11 +144,7 @@ public class SelfPatchingExample : MonoBehaviour
 - set *Previous version path* as the *Build1* directory and increase the value of *Project version* (e.g. if it was *1.0*, set it to *1.1*)
 - if you attempt to create the patch now, you'll receive the following error: `ERROR: directory ...\PatchFiles is not empty`. We don't need those old patch files, so you can safely clear the *PatchFiles* directory
 - now click the **Create Patch** button and wait for the process to finish
-- upload the *PatchFiles* directory to your Drive (simply drag&drop the directory to Drive)
-- it is time to update the download links inside *VersionInfo.info*. We can't use the *BaseDownloadURL* while hosting files on Drive, because each file's share link will contain a custom id in it. So you have two options here:
-  - for each file in Drive, copy&paste the shareable link to VersionInfo (if the link contains any `&` characters, replace them with `&amp;` because otherwise, they will break the xml file) 
-  - add [Download Link Generator for Drive™](https://github.com/yasirkula/DownloadLinkGeneratorForGoogleDrive) to your Drive, right click the *RepairFiles* subdirectory of the *PatchFiles* directory on Drive and select **Open with-Download Link Generator**. After it says "*Status: finished*", copy all the filenames and download links and paste them inside an empty text file on your computer. Now, open the **Update** tab of the *Simple Patch Tool* window, select the VersionInfo and the text file and click **Update Download Links**
-    - right click *PatchFiles* on Drive and select "*Get shareable link*" to make the contents of this directory public without having to share everything inside it manually
-	- apply the first method (sharing manually) to the *1_0__1_1.info* and *1_0__1_1.patch* files and paste their links to the **InfoURL** and **DownloadURL** of the *IncrementalPatch* inside VersionInfo, respectively (well, if you want, you can move those files to the *RepairFiles* directory and the Download Link Generator method will change these urls automatically, as well)
-- update the *VersionInfo.info* that you've initially uploaded to Drive with the one inside *PatchFiles* on your computer
+- [upload the *PatchFiles* directory to a server](https://github.com/yasirkula/SimplePatchTool/wiki/Hosting-Patch-Files)
+- [update the download links inside *VersionInfo.info*](https://github.com/yasirkula/SimplePatchTool/wiki/Updating-Download-Links-in-VersionInfo)
+- update the *VersionInfo.info* that [you've initially uploaded to the server of your choice](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) with the one inside *PatchFiles* on your computer (the one with updated download links)
 - all done! Run the *Build1* version and see the magic happen!

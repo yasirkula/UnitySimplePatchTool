@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR || UNITY_STANDALONE
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -306,3 +307,4 @@ namespace SimplePatchToolUnity
 		}
 	}
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using SimplePatchToolCore;
+﻿#if UNITY_EDITOR || UNITY_STANDALONE
+using SimplePatchToolCore;
 using System.IO;
 using UnityEngine;
 
@@ -42,3 +43,4 @@ namespace SimplePatchToolUnity
 		}
 	}
 }
+#endif
