@@ -158,7 +158,7 @@ In this example, you will see how to create a launcher with self patching suppor
 According to [Recommended Project Structure](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure), there are some important points to consider in this example:
 
 - the main app that the launcher is supposed to update/launch should be stored in a subdirectory (let's say *MainApp*). So, if your launcher resides inside e.g. *MyGame* directory, then the main app should reside inside *MyGame/MainApp*
-- while creating patches for the main app, you should point the *Root path* and/or *Previous version path* to *MyGame/MainApp*. Steps to create patches for the main app are [pretty straightforward](#creating-a-self-patching-app), so I won't be mentioning them here
+- while creating patches for the main app, you should point the *Root path* and/or *Previous version path* to *MyGame/MainApp*. Steps to create patches for the main app are pretty straightforward (see the relevant steps [here](#creating-a-self-patching-app) or [here](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)), so I won't be mentioning them here
 - while creating patches for the launcher, you should point the *Root path* and/or *Previous version path* to *MyGame*. In addition, you should add `MainApp/` to the ignored paths list of the launcher's patch in order not to include that directory in the patch (it also prevents that directory from being seen as an obsolete directory while self patching the launcher). We'll see how to do it shortly
 
 After you make sure that your project is structured/will be structured like this, follow these steps to create the launcher:
@@ -271,11 +271,11 @@ public class SelfPatchingLauncherExample : MonoBehaviour
 - do the same for the main app, except this time paste its VersionInfo url to **Main App Version Info URL** (launcher and the main app will use two separate patches, so they should have separate VersionInfo's, as well)
 - enter the name of the subdirectory that the main app resides inside/will reside inside to the **Main App Subdirectory** variable
 - assign *Plugins/SimplePatchTool/Demo/PatcherUI* prefab to the **Patcher Ui Prefab** variable
-- after building the project, open **Window-Simple Patch Tool** and assign *MyGame* to the *Root path* variable
+- after building the project, open **Window-Simple Patch Tool** and assign the *MyGame* directory to the *Root path* variable
 - create an empty text file (let's say *ignored_files.txt*) on your computer and add this line to it: `MainApp/`
 - assign *ignored_files.txt* to the *Ignored files holder* variable (which will make sure that the MainApp directory will not be included in the launcher's patch)
 - point *Output path* to an empty directory (let's say *PatchFiles*), click the **Create Patch** button and wait for the *Operation successful...* log to appear in the console
 - [upload the *PatchFiles* directory to a server](https://github.com/yasirkula/SimplePatchTool/wiki/Hosting-Patch-Files)
 - [update the download links inside the launcher's *VersionInfo.info*](https://github.com/yasirkula/SimplePatchTool/wiki/Updating-Download-Links-in-VersionInfo)
 - update the *VersionInfo.info* of the launcher that [you've initially uploaded to the server of your choice](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) with the one inside *PatchFiles* on your computer (the one with updated download links)
-- all done! Now, if you create a new version for the launcher, then the older launcher should self patch itself. Or, if you create a new version for the main app, then the launcher should patch the main app
+- all done! Now, if you create a new version of the launcher, then the older launcher should self patch itself. Or, if you create a new version of the main app, then the launcher should patch the main app
