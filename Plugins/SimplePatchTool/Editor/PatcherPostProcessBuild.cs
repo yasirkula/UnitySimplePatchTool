@@ -27,7 +27,7 @@ namespace SimplePatchToolUnity
 			selfPatcherDirectory = Application.dataPath + "/Plugins/SimplePatchTool/Editor/Linux";
 #endif
 
-			if( selfPatcherDirectory != null && Directory.Exists( selfPatcherDirectory ) )
+			if( !string.IsNullOrEmpty( selfPatcherDirectory ) && Directory.Exists( selfPatcherDirectory ) )
 				CopyDirectory( selfPatcherDirectory, Path.Combine( Path.GetDirectoryName( buildPath ), PatchParameters.SELF_PATCHER_DIRECTORY ) );
 		}
 #pragma warning restore 0162
@@ -45,7 +45,8 @@ namespace SimplePatchToolUnity
 			for( int i = 0; i < files.Length; i++ )
 			{
 				FileInfo fileInfo = files[i];
-				fileInfo.CopyTo( targetAbsolutePath + fileInfo.Name, true );
+				if( !fileInfo.Name.EndsWith( ".meta" ) ) // Don't copy .meta files
+					fileInfo.CopyTo( targetAbsolutePath + fileInfo.Name, true );
 			}
 
 			DirectoryInfo[] subDirectories = from.GetDirectories();
