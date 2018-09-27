@@ -8,10 +8,13 @@ using UnityEngine.UI;
 
 namespace SimplePatchToolUnity
 {
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
 	public class PatcherUI : MonoBehaviour
 	{
+		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
 		[SerializeField]
+		[Tooltip( "Should SimplePatchTool logs be logged to console" )]
 		private bool logToConsole = true;
 
 		[SerializeField]
@@ -94,9 +97,6 @@ namespace SimplePatchToolUnity
 				resultText = "Patch is successful";
 				resultButtonLabel = "Dismiss";
 			}
-
-			if( logToConsole )
-				Debug.Log( resultText );
 
 			patchResultText.text = resultText;
 			patcherButtonLabel.text = resultButtonLabel;

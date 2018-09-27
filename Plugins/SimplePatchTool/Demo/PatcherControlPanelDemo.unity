@@ -1704,7 +1704,7 @@ GameObject:
   - component: {fileID: 1296273446}
   - component: {fileID: 1296273445}
   m_Layer: 5
-  m_Name: PatcherControlPanel
+  m_Name: PatcherControlPanelUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1727,11 +1727,11 @@ MonoBehaviour:
   versionInfoURLInput: {fileID: 949058481}
   rootPathInput: {fileID: 1704184449}
   selfPatchingInput: {fileID: 771273258}
-  repairInput: {fileID: 1322289531}
+  repairPatchInput: {fileID: 1322289531}
   incrementalPatchInput: {fileID: 402131321}
   patchButton: {fileID: 325303531}
-  versionInfoVerifier: {fileID: 0}
-  patchInfoVerifier: {fileID: 0}
+  versionInfoRSA: 
+  patchInfoRSA: 
 --- !u!114 &1296273446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1823,7 +1823,7 @@ GameObject:
   - component: {fileID: 1322289530}
   - component: {fileID: 1322289531}
   m_Layer: 5
-  m_Name: UseRepairInput
+  m_Name: UseRepairPatchInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

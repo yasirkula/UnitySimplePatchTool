@@ -1,5 +1,6 @@
 ﻿using SimplePatchToolCore;
 using SimplePatchToolSecurity;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -9,13 +10,14 @@ namespace SimplePatchToolUnity
 	public class PatcherEditor : EditorWindow
 	{
 		private readonly string[] TABS = new string[] { "CREATE", "UPDATE", "SECURITY" };
+		private const string CONSOLE_COMMAND_IGNORED_PATHS_HOLDER = "PATH/TO/ignoredPaths.txt";
 
 		// Create fields
-		private string c_RootPath = "", c_PrevRoot = "", c_OutputPath = "", c_IgnoredFiles = "", c_Name = "", c_Version = "";
-		private bool c_CreateRepair = true, c_IgnoreOutputLog = true;
+		private string c_RootPath = "", c_PrevRoot = "", c_OutputPath = "", c_Name = "", c_Version = "", c_IgnoredPaths = "*output_log.txt\n";
+		private bool c_CreateRepair = true;
 
 		// Update fields
-		private string u_versionInfoPath = "", u_downloadLinksPath = "";
+		private string u_versionInfoPath = "", u_downloadLinksPath = "", u_downloadLinksContents = "\n\n";
 
 		// Security fields
 		private string s_xmlPath = "", s_publicKeyPath = "", s_PrivateKeyPath = "";
@@ -30,7 +32,7 @@ namespace SimplePatchToolUnity
 		{
 			PatcherEditor window = GetWindow<PatcherEditor>();
 			window.titleContent = new GUIContent( "Patcher" );
-			window.minSize = new Vector2( 300f, 275f );
+			window.minSize = new Vector2( 300f, 280f );
 
 			window.c_Name = PatchUtils.IsProjectNameValid( Application.productName ) ? Application.productName : "MyProject";
 			window.c_Version = Application.version;
@@ -66,13 +68,14 @@ namespace SimplePatchToolUnity
 			c_RootPath = PathField( "Root path: ", c_RootPath, true );
 			c_PrevRoot = PathField( "Previous version path: ", c_PrevRoot, true );
 			c_OutputPath = PathField( "Output path: ", c_OutputPath, true );
-			c_IgnoredFiles = PathField( "Ignored files holder: ", c_IgnoredFiles, false );
 
 			c_Name = EditorGUILayout.TextField( "Project name: ", c_Name );
 			c_Version = EditorGUILayout.TextField( "Project version: ", c_Version );
 
 			c_CreateRepair = EditorGUILayout.Toggle( "Create repair patch: ", c_CreateRepair );
-			c_IgnoreOutputLog = EditorGUILayout.Toggle( "Ignore output_log.txt: ", c_IgnoreOutputLog );
+
+			GUILayout.Label( "Ignored paths (one path per line): " );
+			c_IgnoredPaths = EditorGUILayout.TextArea( c_IgnoredPaths );
 
 			GUILayout.Space( 10f );
 
@@ -81,19 +84,18 @@ namespace SimplePatchToolUnity
 				c_RootPath = c_RootPath.Trim();
 				c_PrevRoot = c_PrevRoot.Trim();
 				c_OutputPath = c_OutputPath.Trim();
-				c_IgnoredFiles = c_IgnoredFiles.Trim();
+				c_IgnoredPaths = c_IgnoredPaths.Trim();
 				c_Name = c_Name.Trim();
 				c_Version = c_Version.Trim();
 
-				if( string.IsNullOrEmpty( c_RootPath ) || string.IsNullOrEmpty( c_OutputPath ) || string.IsNullOrEmpty( c_Name ) || string.IsNullOrEmpty( c_Version ) )
+				if( c_RootPath.Length == 0 || c_OutputPath.Length == 0 || c_Name.Length == 0 || c_Version.Length == 0 )
 					return;
 
 				patchCreator = new PatchCreator( c_RootPath, c_OutputPath, c_Name, c_Version );
 				patchCreator.CreateIncrementalPatch( c_PrevRoot.Length > 0, c_PrevRoot ).CreateRepairPatch( c_CreateRepair );
-				if( c_IgnoredFiles.Length > 0 )
-					patchCreator.LoadIgnoredPathsFromFile( c_IgnoredFiles );
-				if( c_IgnoreOutputLog )
-					patchCreator.AddIgnoredPath( "*output_log.txt" );
+
+				if( c_IgnoredPaths.Length > 0 )
+					patchCreator.AddIgnoredPaths( c_IgnoredPaths.Replace( "\r", "" ).Split( '\n' ) );
 
 				if( patchCreator.Run() )
 				{
@@ -111,20 +113,15 @@ namespace SimplePatchToolUnity
 				string command = string.Format( "Patcher create -root=\"{0}\" -out=\"{1}\" -name=\"{2}\" -version=\"{3}\"", c_RootPath, c_OutputPath, c_Name, c_Version );
 				if( c_PrevRoot.Length > 0 )
 					command += string.Concat( " -prevRoot=\"", c_PrevRoot, "\"" );
-				if( c_IgnoredFiles.Length > 0 )
-					command += string.Concat( " -ignoredPaths=\"", c_IgnoredFiles, "\"" );
+				if( c_IgnoredPaths.Length > 0 )
+					command += string.Concat( " -ignoredPaths=\"", CONSOLE_COMMAND_IGNORED_PATHS_HOLDER, "\"" );
 				if( !c_CreateRepair )
 					command += " -dontCreateRepairPatch";
 
 				Debug.Log( command );
 
-				if( c_IgnoreOutputLog )
-				{
-					if( c_IgnoredFiles.Length > 0 )
-						Debug.Log( string.Concat( "You have to add *output_log.txt to ", c_IgnoredFiles, " manually" ) );
-					else
-						Debug.Log( "To ignore output_log.txt, you have to provide an Ignored files holder and add *output_log.txt to it manually" );
-				}
+				if( c_IgnoredPaths.Length > 0 )
+					Debug.Log( string.Concat( "You have to insert the following ignored path(s) to \"", CONSOLE_COMMAND_IGNORED_PATHS_HOLDER, "\":\n", c_IgnoredPaths ) );
 			}
 		}
 
@@ -133,22 +130,46 @@ namespace SimplePatchToolUnity
 			u_versionInfoPath = PathField( "VersionInfo path: ", u_versionInfoPath, false );
 			u_downloadLinksPath = PathField( "Download links holder: ", u_downloadLinksPath, false );
 
+			GUILayout.Label( "Or, paste download links here (one link per line): " );
+			u_downloadLinksContents = EditorGUILayout.TextArea( u_downloadLinksContents );
+
 			if( GUILayout.Button( "Update Download Links", GUILayout.Height( 35f ) ) )
 			{
 				u_versionInfoPath = u_versionInfoPath.Trim();
 				u_downloadLinksPath = u_downloadLinksPath.Trim();
+				u_downloadLinksContents = u_downloadLinksContents.Trim();
 
-				if( string.IsNullOrEmpty( u_versionInfoPath ) || string.IsNullOrEmpty( u_downloadLinksPath ) )
+				if( u_versionInfoPath.Length == 0 || ( u_downloadLinksPath.Length == 0 && u_downloadLinksContents.Length == 0 ) )
 					return;
 
 				PatchUpdater patchUpdater = new PatchUpdater( u_versionInfoPath, ( log ) => Debug.Log( log ) );
-				if( patchUpdater.UpdateDownloadLinks( u_downloadLinksPath ) )
-				{
-					patchUpdater.SaveChanges();
-					Debug.Log( "Result: True" );
-				}
+				bool updateSuccessful;
+				if( u_downloadLinksPath.Length > 0 )
+					updateSuccessful = patchUpdater.UpdateDownloadLinks( u_downloadLinksPath );
 				else
-					Debug.Log( "Result: False" );
+				{
+					Dictionary<string, string> downloadLinks = new Dictionary<string, string>();
+					string[] downloadLinksSplit = u_downloadLinksContents.Replace( "\r", "" ).Split( '\n' );
+					for( int i = 0; i < downloadLinksSplit.Length; i++ )
+					{
+						string downloadLinkRaw = downloadLinksSplit[i].Trim();
+						if( string.IsNullOrEmpty( downloadLinkRaw ) )
+							continue;
+
+						int separatorIndex = downloadLinkRaw.LastIndexOf( ' ' );
+						if( separatorIndex == -1 )
+							continue;
+
+						downloadLinks[downloadLinkRaw.Substring( 0, separatorIndex )] = downloadLinkRaw.Substring( separatorIndex + 1 );
+					}
+
+					updateSuccessful = patchUpdater.UpdateDownloadLinks( downloadLinks );
+				}
+
+				if( updateSuccessful )
+					patchUpdater.SaveChanges();
+
+				Debug.Log( "Result: " + updateSuccessful );
 			}
 		}
 
@@ -163,7 +184,7 @@ namespace SimplePatchToolUnity
 				s_xmlPath = s_xmlPath.Trim();
 				s_PrivateKeyPath = s_PrivateKeyPath.Trim();
 
-				if( string.IsNullOrEmpty( s_xmlPath ) || string.IsNullOrEmpty( s_PrivateKeyPath ) )
+				if( s_xmlPath.Length == 0 || s_PrivateKeyPath.Length == 0 )
 					return;
 
 				XMLSigner.SignXMLFile( s_xmlPath, File.ReadAllText( s_PrivateKeyPath ) );
@@ -174,7 +195,7 @@ namespace SimplePatchToolUnity
 				s_xmlPath = s_xmlPath.Trim();
 				s_publicKeyPath = s_publicKeyPath.Trim();
 
-				if( string.IsNullOrEmpty( s_xmlPath ) || string.IsNullOrEmpty( s_publicKeyPath ) )
+				if( s_xmlPath.Length == 0 || s_publicKeyPath.Length == 0 )
 					return;
 
 				Debug.Log( "Is genuine: " + XMLSigner.VerifyXMLFile( s_xmlPath, File.ReadAllText( s_publicKeyPath ) ) );

@@ -36,6 +36,13 @@ namespace SimplePatchToolUnity
 			DontDestroyOnLoad( Instance.gameObject );
 		}
 
+		public static SimplePatchTool CreatePatcher( string rootPath, string versionInfoURL )
+		{
+			return new SimplePatchTool( rootPath, versionInfoURL ).
+				UseCustomDownloadHandler( () => new CookieAwareWebClient() ). // to support https in Unity
+				UseCustomFreeSpaceCalculator( ( drive ) => long.MaxValue ); // DriveInfo.AvailableFreeSpace is not supported in Unity
+		}
+
 		private void Update()
 		{
 			if( OnUpdate != null )

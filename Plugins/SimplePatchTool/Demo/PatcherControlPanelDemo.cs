@@ -1,19 +1,34 @@
 ﻿#if UNITY_EDITOR || UNITY_STANDALONE
 using SimplePatchToolCore;
 using SimplePatchToolSecurity;
+using UnityEngine.UI;
 #endif
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace SimplePatchToolUnity
 {
-	public class PatcherControlPanel : MonoBehaviour
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
+	public class PatcherControlPanelDemo : MonoBehaviour
 	{
+		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
+		[Header( "XML Verifier Keys (Optional)" )]
+		[SerializeField]
+		[TextArea]
+		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo'es" )]
+		private string versionInfoRSA;
+
+		[SerializeField]
+		[TextArea]
+		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo'es" )]
+		private string patchInfoRSA;
+
+		[Header( "Other Variables" )]
 		[SerializeField]
 		private PatcherUI patcherUiPrefab;
 		private PatcherUI runningPatcher;
 
+		[Header( "Internal Variables" )]
 		[SerializeField]
 		private InputField versionInfoURLInput;
 
@@ -24,20 +39,13 @@ namespace SimplePatchToolUnity
 		private Toggle selfPatchingInput;
 
 		[SerializeField]
-		private Toggle repairInput;
+		private Toggle repairPatchInput;
 
 		[SerializeField]
 		private Toggle incrementalPatchInput;
 
 		[SerializeField]
 		private Button patchButton;
-
-		[Header( "Public RSA Keys" )]
-		[SerializeField]
-		private TextAsset versionInfoVerifier;
-
-		[SerializeField]
-		private TextAsset patchInfoVerifier;
 
 		private void Awake()
 		{
@@ -64,23 +72,14 @@ namespace SimplePatchToolUnity
 				}
 #endif
 
-				SimplePatchTool patcher = new SimplePatchTool( rootPathInput.text, versionInfoURLInput.text ).
-					UseRepair( repairInput.isOn ).UseIncrementalPatch( incrementalPatchInput.isOn ).
-					UseCustomDownloadHandler( () => new CookieAwareWebClient() ). // to support https in Unity
-					UseCustomFreeSpaceCalculator( ( drive ) => long.MaxValue ). // DriveInfo.AvailableFreeSpace is not supported on Unity
-					LogProgress( true );
+				SimplePatchTool patcher = SPTUtils.CreatePatcher( rootPathInput.text, versionInfoURLInput.text ).
+					UseRepairPatch( repairPatchInput.isOn ).UseIncrementalPatch( incrementalPatchInput.isOn ).LogProgress( true );
 
-				if( versionInfoVerifier != null )
-				{
-					string versionInfoRSA = versionInfoVerifier.text;
+				if( !string.IsNullOrEmpty( versionInfoRSA ) )
 					patcher.UseVersionInfoVerifier( ( ref string xml ) => XMLSigner.VerifyXMLContents( xml, versionInfoRSA ) );
-				}
 
-				if( patchInfoVerifier != null )
-				{
-					string patchInfoRSA = patchInfoVerifier.text;
+				if( !string.IsNullOrEmpty( patchInfoRSA ) )
 					patcher.UsePatchInfoVerifier( ( ref string xml ) => XMLSigner.VerifyXMLContents( xml, patchInfoRSA ) );
-				}
 
 				if( patcher.Run( selfPatchingInput.isOn ) )
 				{
