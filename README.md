@@ -51,9 +51,9 @@ SimplePatchTool comes bundled with a self patcher executable on Windows platform
   - **macOS:** Plugins/SimplePatchTool/Editor/OSX
   - **Linux:** Plugins/SimplePatchTool/Editor/Linux
     - these files will [automatically be copied](Plugins/SimplePatchTool/Editor/PatcherPostProcessBuild.cs) to a subdirectory called [SPPatcher](https://github.com/yasirkula/SimplePatchTool/blob/master/SimplePatchToolCore/Utilities/PatchParameters.cs) after building the project to standalone (if you want, you can set **PatcherPostProcessBuild.ENABLED** to *false* to disable this feature)
-- update the name of the self patcher executable in **SPTUtils.SelfPatcherExecutablePath** property
+- update the name of the self patcher executable in [SPTUtils.SelfPatcherExecutablePath](Plugins/SimplePatchTool/Scripts/SPTUtils.cs) property
 - you can now run the self patcher like this: `patcher.ApplySelfPatch( SPTUtils.SelfPatcherExecutablePath );`
-- or like this, if you want to automatically restart the game/launcher after self patching is complete: `patcher.ApplySelfPatch( SPTUtils.SelfPatcherExecutablePath, PatchUtils.GetCurrentExecutablePath() );`
+- or like this, if you want to automatically restart the game/launcher after self patching is completed: `patcher.ApplySelfPatch( SPTUtils.SelfPatcherExecutablePath, PatchUtils.GetCurrentExecutablePath() );`
 
 ## EXAMPLES
 
@@ -61,7 +61,7 @@ Some of the example scenes use the [PatcherUI](Plugins/SimplePatchTool/Demo/Patc
 
 ![patcher_ui](Images/patcher-ui.png)
 
-If you [sign your *VersionInfo* and/or *PatchInfo* files with private RSA key(s)](https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches)), you can paste their corresponding public RSA key(s) to the **Version Info RSA** and/or **Patch Info RSA** variables in the example scenes.
+If you [sign your *VersionInfo* and/or *PatchInfo* files with private RSA key(s)](https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches), you can paste their corresponding public RSA key(s) to the **Version Info RSA** and/or **Patch Info RSA** variables in the demo scenes.
 
 If you plan to add self patching support to your app or test a demo scene that makes use of self patching, make sure that [your target platform's self patcher executable is set up](#about-self-patcher-executable).
 
@@ -86,7 +86,7 @@ You can test this scene as following:
 - if you had previously set *Check Version Only* to *false*, try deleting a redundant file from *SelfPatcherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the app, it will automatically detect this change and prompt you to update/repair itself
 - now, make some changes in the scene in Unity (e.g. add some cubes that are visible to the camera) and build it to another empty directory (let's say *SelfPatcherBuild2*)
 - [create a patch using *SelfPatcherBuild2* as *Root path* and *SelfPatcherBuild* as *Previous version path* while also increasing the *Project version*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- if you get an error message like `ERROR: directory ...\PatchFiles is not empty` while creating the patch, make sure to point *Output path* to an empty directory
+- if you get an error message like `ERROR: directory ... is not empty` while creating the patch, make sure to point *Output path* to an empty directory
 - if you launch the app, you'll see that it'll detect the update and prompt you to update itself to the latest version
 
 ### [LauncherDemo](Plugins/SimplePatchTool/Demo/LauncherDemo.cs)
@@ -102,8 +102,8 @@ You can test this scene as following:
 - decide a **Main App Subdirectory** (let's say *MainAppBuild*) and **Main App Executable** (let's say *MainApp.exe*)
 - build this scene to an empty directory (let's say *LauncherBuild*)
 - inside *LauncherBuild*, create an empty directory named *MainAppBuild*
-- build another scene that should act as the main app inside *MainAppBuild* (the executable should be named as *MainApp.exe*)
+- build another scene/project to *MainAppBuild* (this one will act as the main app)(the executable should be named as *MainApp.exe*)
 - [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin) (complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part, as well)
 - create a patch for the main app using *MainAppBuild* as *Root path*
 - try deleting a redundant file from *LauncherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
-- also try creating newer versions of the launcher and/or the main app [see [SelfPatchingAppDemo](#SelfPatchingAppDemo) for reference) and verify that the old launcher patches itself and/or the main app to the newest version(s)
+- also try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) for reference) and verify that the old launcher patches itself and/or the main app to the newest version(s)
