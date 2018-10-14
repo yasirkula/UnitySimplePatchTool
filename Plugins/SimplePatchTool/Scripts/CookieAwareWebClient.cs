@@ -214,8 +214,21 @@ namespace SimplePatchToolUnity
 			WebOp _webOp = webOp;
 			try
 			{
-				UnityWebRequest webRequest = webOp.CreateWebRequest( cookies );
-				yield return webRequest.Send();
+				Exception error = null;
+				UnityWebRequest webRequest = null;
+
+				try
+				{
+					webRequest = webOp.CreateWebRequest( cookies );
+				}
+				catch( Exception e )
+				{
+					error = e;
+					webRequest = null;
+				}
+
+				if( webRequest != null )
+					yield return webRequest.Send();
 
 				lock( syncObj )
 				{
@@ -224,11 +237,16 @@ namespace SimplePatchToolUnity
 
 				if( OnDownloadStringComplete != null )
 				{
-					bool cancelled = _webOp.Cancelled && webRequest.isError;
-					Exception error = webRequest.isError ? new Exception( webRequest.error ) : null;
-					string result = webRequest.isError ? null : webRequest.downloadHandler.text;
+					if( error == null )
+					{
+						bool cancelled = _webOp.Cancelled && webRequest.isError;
+						error = webRequest.isError ? new Exception( webRequest.error ) : null;
+						string result = webRequest.isError ? null : webRequest.downloadHandler.text;
 
-					OnDownloadStringComplete( cancelled, error, result, _webOp.userState );
+						OnDownloadStringComplete( cancelled, error, result, _webOp.userState );
+					}
+					else
+						OnDownloadStringComplete( false, error, null, _webOp.userState );
 				}
 			}
 			finally
@@ -243,15 +261,29 @@ namespace SimplePatchToolUnity
 			WebOp _webOp = webOp;
 			try
 			{
-				UnityWebRequest webRequest = webOp.CreateWebRequest( cookies );
-				webRequest.Send();
+				Exception error = null;
+				UnityWebRequest webRequest = null;
 
-				while( !webRequest.isDone )
+				try
 				{
-					if( OnDownloadFileProgressChange != null )
-						OnDownloadFileProgressChange( (long) webRequest.downloadedBytes, ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength );
+					webRequest = webOp.CreateWebRequest( cookies );
+					webRequest.Send();
+				}
+				catch( Exception e )
+				{
+					error = e;
+					webRequest = null;
+				}
 
-					yield return null;
+				if( webRequest != null )
+				{
+					while( !webRequest.isDone )
+					{
+						if( OnDownloadFileProgressChange != null )
+							OnDownloadFileProgressChange( (long) webRequest.downloadedBytes, ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength );
+
+						yield return null;
+					}
 				}
 
 				lock( syncObj )
@@ -259,25 +291,30 @@ namespace SimplePatchToolUnity
 					webOp = null;
 				}
 
-				bool cancelled = _webOp.Cancelled && webRequest.isError;
-				if( !cancelled )
+				if( error == null )
 				{
-					if( OnDownloadFileProgressChange != null )
+					bool cancelled = _webOp.Cancelled && webRequest.isError;
+					if( !cancelled )
 					{
-						long contentLength = ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength;
-						OnDownloadFileProgressChange( contentLength, contentLength );
+						if( OnDownloadFileProgressChange != null )
+						{
+							long contentLength = ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength;
+							OnDownloadFileProgressChange( contentLength, contentLength );
+						}
+					}
+
+					string cookie = webRequest.GetResponseHeader( "set-cookie" );
+					if( cookie != null && cookie.Length > 0 )
+						cookies[webRequest.url] = cookie;
+
+					if( OnDownloadFileComplete != null )
+					{
+						error = webRequest.isError ? new Exception( webRequest.error ) : null;
+						OnDownloadFileComplete( cancelled, error, _webOp.userState );
 					}
 				}
-
-				string cookie = webRequest.GetResponseHeader( "set-cookie" );
-				if( cookie != null && cookie.Length > 0 )
-					cookies[webRequest.url] = cookie;
-
-				if( OnDownloadFileComplete != null )
-				{
-					Exception error = webRequest.isError ? new Exception( webRequest.error ) : null;
-					OnDownloadFileComplete( cancelled, error, _webOp.userState );
-				}
+				else if( OnDownloadFileComplete != null )
+					OnDownloadFileComplete( false, error, _webOp.userState );
 			}
 			finally
 			{
