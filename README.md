@@ -18,6 +18,7 @@ SimplePatchTool is licensed under the [MIT License](LICENSE); however, it uses e
 
 - import **SimplePatchTool.unitypackage** to your project
 - in **Edit-Project Settings-Player**, change **Api Compatibility Level** to **.NET 2.0** or higher (i.e. don't use *.NET 2.0 Subset*)
+- *(optional)* in **Edit-Project Settings-Player**, enable **Run In Background** so that SimplePatchTool can continue running while the application is minimized/not focused
 - you can now use **Window-Simple Patch Tool** to [create/update patches, sign/verify xml files and generate RSA key pair](https://github.com/yasirkula/SimplePatchTool/wiki):
 
 ![editor_window](Images/editor-window.png)
