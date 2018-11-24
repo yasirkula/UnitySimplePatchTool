@@ -4,7 +4,7 @@
 
 **Forum Thread:** https://forum.unity.com/threads/simplepatchtool-open-source-patching-solution-for-standalone-platforms.542465/
 
-This plugin is a Unity port of the [SimplePatchTool library](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications. Before using this plugin, you should first see SimplePatchTool's documentation: https://github.com/yasirkula/SimplePatchTool
+This plugin is a Unity port of the [SimplePatchTool library](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications. Before using this plugin, you are recommended to first see SimplePatchTool's documentation: https://github.com/yasirkula/SimplePatchTool
 
 ## LICENSE
 
@@ -80,7 +80,7 @@ This scene allows you to quickly create and test a self patching app. It can't r
 
 You can test this scene as following:
 
-- follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) and paste VersionInfo's url to the **Version Info URL** variable of *SelfPatchingAppUI* in the Inspector
+- follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) and paste VersionInfo's url to the **Version Info URL** variable of *SelfPatchingAppUI* in the Inspector
 - tweak the value of **Check Version Only** as you like
 - build this scene to an empty directory (let's say *SelfPatcherBuild*)
 - [create a patch using the *SelfPatcherBuild* directory as *Root path*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin) (don't forget to complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part, as well)
@@ -99,7 +99,7 @@ This scene allows you to quickly create and test a launcher that can self patch 
 You can test this scene as following:
 
 - [read these instructions](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure)
-- [create VersionInfo'es](https://github.com/yasirkula/SimplePatchTool/wiki/Before-Creating-Your-First-Patch) for the launcher and the main app and paste their VersionInfo urls to the **Launcher Version Info URL** and **Main App Version Info URL** variables of *LauncherUI* in the Inspector
+- [create VersionInfo'es](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) for the launcher and the main app and paste their VersionInfo urls to the **Launcher Version Info URL** and **Main App Version Info URL** variables of *LauncherUI* in the Inspector
 - decide a **Main App Subdirectory** (let's say *MainAppBuild*) and **Main App Executable** (let's say *MainApp.exe*)
 - build this scene to an empty directory (let's say *LauncherBuild*)
 - inside *LauncherBuild*, create an empty directory named *MainAppBuild*
