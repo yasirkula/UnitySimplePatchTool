@@ -76,6 +76,8 @@ This scene lets you tweak some variables at runtime to quickly test some patches
 
 ![patcher_ui](Images/self-patching-app-demo.png)
 
+**Video tutorial:** https://www.youtube.com/watch?v=Gjl6my7rVSI
+
 This scene allows you to quickly create and test a self patching app. It can't run on the Editor.
 
 You can test this scene as following:
