@@ -85,7 +85,8 @@ You can test this scene as following:
 - follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) and paste VersionInfo's url to the **Version Info URL** variable of *SelfPatchingAppUI* in the Inspector
 - tweak the value of **Check Version Only** as you like
 - build this scene to an empty directory (let's say *SelfPatcherBuild*)
-- [create a patch using the *SelfPatcherBuild* directory as *Root path*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin) (don't forget to complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part, as well)
+- [create a patch using the *SelfPatcherBuild* directory as *Root path*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
+- don't forget to complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part
 - if you had previously set *Check Version Only* to *false*, try deleting a redundant file from *SelfPatcherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the app, it will automatically detect this change and prompt you to update/repair itself
 - now, make some changes in the scene in Unity (e.g. add some cubes that are visible to the camera) and build it to another empty directory (let's say *SelfPatcherBuild2*)
 - [create a patch using *SelfPatcherBuild2* as *Root path* and *SelfPatcherBuild* as *Previous version path* while also increasing the *Project version*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
@@ -96,17 +97,22 @@ You can test this scene as following:
 
 ![patcher_ui](Images/launcher-demo.png)
 
+**Video tutorial:** https://www.youtube.com/watch?v=P7iUQ-n3EQA
+
 This scene allows you to quickly create and test a launcher that can self patch itself in addition to patching and launching a main app. Launcher first checks if it is up-to-date (if not, self patches itself) and then checks if the main app is up-to-date (if not, patches it). If you don't provide a VersionInfo url for one of these patches, that patch will be skipped. This scene can't run on the Editor.
 
-You can test this scene as following:
+You can test this scene as following (you are recommended to test the [SelfPatchingAppDemo](#selfpatchingappdemo) scene first):
 
-- [read these instructions](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure)
-- [create VersionInfo'es](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) for the launcher and the main app and paste their VersionInfo urls to the **Launcher Version Info URL** and **Main App Version Info URL** variables of *LauncherUI* in the Inspector
+- [read these instructions to understand the recommended project structure for launchers](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure)
+- [generate versionInfoURL's](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) for the launcher and the main app and paste them to the **Launcher Version Info URL** and **Main App Version Info URL** variables of *LauncherUI* in the Inspector
 - decide a **Main App Subdirectory** (let's say *MainAppBuild*) and **Main App Executable** (let's say *MainApp.exe*)
 - build this scene to an empty directory (let's say *LauncherBuild*)
 - inside *LauncherBuild*, create an empty directory named *MainAppBuild*
-- build another scene/project to *MainAppBuild* (this one will act as the main app)(the executable should be named as *MainApp.exe*)
-- [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin) (complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part, as well)
-- create a patch for the main app using *MainAppBuild* as *Root path*
+- build another scene/project to another empty directory (let's say *MainAppBuild*) with *MainApp.exe* executable name (this directory will be our main app)
+- [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
+- complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part, as well
+- create another patch using *MainAppBuild* as *Root path* (which will be the main app's patch) and complete [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part for it, as well (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
+- now copy&paste the *MainAppBuild* directory into the *LauncherBuild* directory to test the launcher
 - try deleting a redundant file from *LauncherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
-- also try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) for reference) and verify that the old launcher patches itself and/or the main app to the newest version(s)
+- try deleting a file from *MainAppBuild* and hit the *Repair Game* button in the launcher to repair the main app
+- try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) to learn the process) and verify that the old launcher patches itself and/or the main app to the newest version(s)
