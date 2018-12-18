@@ -111,7 +111,7 @@ You can test this scene as following (you are recommended to test the [SelfPatch
 - [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
 - complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part, as well
 - create another patch using *MainAppBuild* as *Root path* (which will be the main app's patch) and complete [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part for it, as well (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
-- now copy&paste the *MainAppBuild* directory into the *LauncherBuild* directory to test the launcher
-- try deleting a redundant file from *LauncherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
+- now create a copy of the *LauncherBuild* directory and copy&paste the *MainAppBuild* directory into it to test the launcher
+- try deleting a redundant file of the launcher (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
 - try deleting a file from *MainAppBuild* and hit the *Repair Game* button in the launcher to repair the main app
 - try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) to learn the process) and verify that the old launcher correctly patches itself and/or the main app to the newest version(s)
