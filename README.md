@@ -109,7 +109,7 @@ You can test this scene as following (you are recommended to test the [SelfPatch
 - build this scene to an empty directory (let's say *LauncherBuild*)
 - build another scene/project to another empty directory (*MainAppBuild*) and name the executable *MainApp.exe* (this directory will be our main app)
 - [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patchh) part, as well
+- complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part, as well
 - create another patch using *MainAppBuild* as *Root path* (which will be the main app's patch) and complete [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part for it, as well (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
 - now copy&paste the *MainAppBuild* directory into the *LauncherBuild* directory to test the launcher
 - try deleting a redundant file from *LauncherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
