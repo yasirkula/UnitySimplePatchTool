@@ -86,7 +86,7 @@ You can test this scene as following:
 - tweak the value of **Check Version Only** as you like
 - build this scene to an empty directory (let's say *SelfPatcherBuild*)
 - [create a patch using the *SelfPatcherBuild* directory as *Root path*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- don't forget to complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part
+- don't forget to complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part
 - if you had previously set *Check Version Only* to *false*, try deleting a redundant file from *SelfPatcherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the app, it will automatically detect this change and prompt you to update/repair itself
 - now, make some changes in the scene in Unity (e.g. add some cubes that are visible to the camera) and build it to another empty directory (let's say *SelfPatcherBuild2*)
 - [create a patch using *SelfPatcherBuild2* as *Root path* and *SelfPatcherBuild* as *Previous version path* while also increasing the *Project version*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
@@ -107,12 +107,11 @@ You can test this scene as following (you are recommended to test the [SelfPatch
 - [generate versionInfoURL's](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) for the launcher and the main app and paste them to the **Launcher Version Info URL** and **Main App Version Info URL** variables of *LauncherUI* in the Inspector
 - decide a **Main App Subdirectory** (let's say *MainAppBuild*) and **Main App Executable** (let's say *MainApp.exe*)
 - build this scene to an empty directory (let's say *LauncherBuild*)
-- inside *LauncherBuild*, create an empty directory named *MainAppBuild*
-- build another scene/project to another empty directory (let's say *MainAppBuild*) with *MainApp.exe* executable name (this directory will be our main app)
+- build another scene/project to another empty directory (*MainAppBuild*) and name the executable *MainApp.exe* (this directory will be our main app)
 - [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part, as well
-- create another patch using *MainAppBuild* as *Root path* (which will be the main app's patch) and complete [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#after-creating-a-new-patch) part for it, as well (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
+- complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patchh) part, as well
+- create another patch using *MainAppBuild* as *Root path* (which will be the main app's patch) and complete [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part for it, as well (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
 - now copy&paste the *MainAppBuild* directory into the *LauncherBuild* directory to test the launcher
 - try deleting a redundant file from *LauncherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
 - try deleting a file from *MainAppBuild* and hit the *Repair Game* button in the launcher to repair the main app
-- try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) to learn the process) and verify that the old launcher patches itself and/or the main app to the newest version(s)
+- try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) to learn the process) and verify that the old launcher correctly patches itself and/or the main app to the newest version(s)
