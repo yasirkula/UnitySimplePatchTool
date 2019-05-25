@@ -23,6 +23,10 @@ namespace SimplePatchToolUnity
 		[Tooltip( "While checking for updates:\ntrue: only version number is checked (faster)\nfalse: hashes and sizes of the files are checked (verifies file integrity)" )]
 		private bool checkVersionOnly = true;
 
+		[SerializeField]
+		[Tooltip( "Name of the self patcher executable" )]
+		private string selfPatcherExecutable = "SelfPatcher.exe";
+
 		[Header( "XML Verifier Keys (Optional)" )]
 		[SerializeField]
 		[TextArea]
@@ -77,8 +81,7 @@ namespace SimplePatchToolUnity
 
 		private void InitializePatcher()
 		{
-			patcher = SPTUtils.CreatePatcher( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), versionInfoURL ).
-				UseRepairPatch( true ).UseIncrementalPatch( true ).LogProgress( true );
+			patcher = SPTUtils.CreatePatcher( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), versionInfoURL );
 
 			if( !string.IsNullOrEmpty( versionInfoRSA ) )
 				patcher.UseVersionInfoVerifier( ( ref string xml ) => XMLSigner.VerifyXMLContents( xml, versionInfoRSA ) );
@@ -113,7 +116,7 @@ namespace SimplePatchToolUnity
 			if( patcher != null && !patcher.IsRunning && patcher.Operation == PatchOperation.CheckingForUpdates && patcher.Result == PatchResult.Success )
 			{
 				if( patcher.Run( true ) ) // Start patching in self patching mode
-					Instantiate( patcherUiPrefab ).Initialize( patcher ); // Show progress on a PatcherUI instance
+					Instantiate( patcherUiPrefab ).Initialize( patcher, selfPatcherExecutable ); // Show progress on a PatcherUI instance
 				else
 					Debug.LogError( "Something went wrong" );
 			}

@@ -228,7 +228,11 @@ namespace SimplePatchToolUnity
 				}
 
 				if( webRequest != null )
+#if UNITY_2017_2_OR_NEWER
+					yield return webRequest.SendWebRequest();
+#else
 					yield return webRequest.Send();
+#endif
 
 				lock( syncObj )
 				{
@@ -239,9 +243,15 @@ namespace SimplePatchToolUnity
 				{
 					if( error == null )
 					{
-						bool cancelled = _webOp.Cancelled && webRequest.isError;
-						error = webRequest.isError ? new Exception( webRequest.error ) : null;
-						string result = webRequest.isError ? null : webRequest.downloadHandler.text;
+#if UNITY_2017_1_OR_NEWER
+						bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
+#else
+						bool webRequestError = webRequest.isError;
+#endif
+
+						bool cancelled = _webOp.Cancelled && webRequestError;
+						error = webRequestError ? new Exception( webRequest.error ) : null;
+						string result = webRequestError ? null : webRequest.downloadHandler.text;
 
 						OnDownloadStringComplete( cancelled, error, result, _webOp.userState );
 					}
@@ -267,7 +277,11 @@ namespace SimplePatchToolUnity
 				try
 				{
 					webRequest = webOp.CreateWebRequest( cookies );
+#if UNITY_2017_2_OR_NEWER
+					webRequest.SendWebRequest();
+#else
 					webRequest.Send();
+#endif
 				}
 				catch( Exception e )
 				{
@@ -293,7 +307,13 @@ namespace SimplePatchToolUnity
 
 				if( error == null )
 				{
-					bool cancelled = _webOp.Cancelled && webRequest.isError;
+#if UNITY_2017_1_OR_NEWER
+					bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
+#else
+					bool webRequestError = webRequest.isError;
+#endif
+
+					bool cancelled = _webOp.Cancelled && webRequestError;
 					if( !cancelled )
 					{
 						if( OnDownloadFileProgressChange != null )
@@ -309,7 +329,7 @@ namespace SimplePatchToolUnity
 
 					if( OnDownloadFileComplete != null )
 					{
-						error = webRequest.isError ? new Exception( webRequest.error ) : null;
+						error = webRequestError ? new Exception( webRequest.error ) : null;
 						OnDownloadFileComplete( cancelled, error, _webOp.userState );
 					}
 				}

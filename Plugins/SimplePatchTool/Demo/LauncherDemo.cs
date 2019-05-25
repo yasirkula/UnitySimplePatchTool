@@ -5,6 +5,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 using Debug = UnityEngine.Debug;
 #endif
 using UnityEngine;
@@ -32,6 +33,10 @@ namespace SimplePatchToolUnity
 		[SerializeField]
 		[Tooltip( "The file in mainAppSubdirectory that will be launched when Play is pressed" )]
 		private string mainAppExecutable = "MyApp.exe";
+
+		[SerializeField]
+		[Tooltip( "Name of the self patcher executable" )]
+		private string selfPatcherExecutable = "SelfPatcher.exe";
 
 		[SerializeField]
 		[Tooltip( "Should SimplePatchTool logs be logged to console" )]
@@ -64,6 +69,9 @@ namespace SimplePatchToolUnity
 		private Text patchNotesText;
 
 		[SerializeField]
+		private Text versionCodeText;
+
+		[SerializeField]
 		private Text patcherLogText;
 
 		[SerializeField]
@@ -71,6 +79,9 @@ namespace SimplePatchToolUnity
 
 		[SerializeField]
 		private Slider patcherProgressbar;
+
+		[SerializeField]
+		private Slider patcherOverallProgressbar;
 
 		[SerializeField]
 		private Button patchButton;
@@ -87,7 +98,13 @@ namespace SimplePatchToolUnity
 		[SerializeField]
 		private Button websiteButton;
 
+		private string launcherDirectory;
+		private string mainAppDirectory;
+		private string selfPatcherPath;
+
 		private SimplePatchTool patcher;
+		private PatcherListener patcherListener;
+
 		private bool isPatchingLauncher;
 
 		private void Awake()
@@ -104,12 +121,55 @@ namespace SimplePatchToolUnity
 			patcherLogText.text = "";
 			patcherProgressText.text = "";
 			patcherProgressbar.value = 0;
+			patcherOverallProgressbar.value = 0;
 
 			patchButton.onClick.AddListener( PatchButtonClicked );
 			repairButton.onClick.AddListener( RepairButtonClicked );
 			playButton.onClick.AddListener( PlayButtonClicked );
 			forumButton.onClick.AddListener( ForumButtonClicked );
 			websiteButton.onClick.AddListener( WebsiteButtonClicked );
+
+			launcherDirectory = Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() );
+			mainAppDirectory = Path.Combine( launcherDirectory, mainAppSubdirectory );
+			selfPatcherPath = PatchUtils.GetDefaultSelfPatcherExecutablePath( selfPatcherExecutable );
+
+			string currentVersion = PatchUtils.GetCurrentAppVersion();
+			versionCodeText.text = string.IsNullOrEmpty( currentVersion ) ? "" : ( "v" + currentVersion );
+
+			patcherListener = new PatcherListener();
+			patcherListener.OnLogReceived += ( log ) =>
+			{
+				if( logToConsole )
+					Debug.Log( log );
+
+				patcherLogText.text = log;
+			};
+			patcherListener.OnProgressChanged += ( progress ) =>
+			{
+				if( logToConsole )
+					Debug.Log( string.Concat( progress.Percentage, "% ", progress.ProgressInfo ) );
+
+				patcherProgressText.text = progress.ProgressInfo;
+				patcherProgressbar.value = progress.Percentage;
+			};
+			patcherListener.OnOverallProgressChanged += ( progress ) => patcherOverallProgressbar.value = progress.Percentage;
+			patcherListener.OnVersionInfoFetched += ( versionInfo ) =>
+			{
+				if( isPatchingLauncher )
+					versionInfo.AddIgnoredPath( mainAppSubdirectory + "/" );
+			};
+			patcherListener.OnVersionFetched += ( currVersion, newVersion ) =>
+			{
+				if( isPatchingLauncher )
+					versionCodeText.text = "v" + currVersion;
+			};
+			patcherListener.OnFinish += () =>
+			{
+				if( patcher.Operation == PatchOperation.CheckingForUpdates )
+					CheckForUpdatesFinished();
+				else
+					PatchFinished();
+			};
 
 			if( !string.IsNullOrEmpty( patchNotesURL ) )
 				StartCoroutine( FetchPatchNotes() );
@@ -125,7 +185,7 @@ namespace SimplePatchToolUnity
 			return;
 #else
 			if( patcher != null && !patcher.IsRunning )
-				StartCoroutine( ExecutePatch() );
+				ExecutePatch();
 #endif
 		}
 
@@ -144,9 +204,7 @@ namespace SimplePatchToolUnity
 			if( patcher != null && patcher.IsRunning && patcher.Operation != PatchOperation.CheckingForUpdates )
 				return;
 
-			string mainAppDirectory = Path.Combine( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), mainAppSubdirectory );
 			FileInfo mainApp = new FileInfo( Path.Combine( mainAppDirectory, mainAppExecutable ) );
-
 			if( mainApp.Exists )
 			{
 				Process.Start( new ProcessStartInfo( mainApp.FullName ) { WorkingDirectory = mainApp.DirectoryName } );
@@ -178,8 +236,8 @@ namespace SimplePatchToolUnity
 
 			isPatchingLauncher = true;
 
-			InitializePatcher( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), launcherVersionInfoURL );
-			StartCoroutine( CheckForUpdates( false ) );
+			InitializePatcher( launcherDirectory, launcherVersionInfoURL );
+			CheckForUpdates( false );
 
 			return true;
 		}
@@ -194,15 +252,19 @@ namespace SimplePatchToolUnity
 
 			isPatchingLauncher = false;
 
-			InitializePatcher( Path.Combine( Path.GetDirectoryName( PatchUtils.GetCurrentExecutablePath() ), mainAppSubdirectory ), mainAppVersionInfoURL );
-			StartCoroutine( checkForUpdates ? CheckForUpdates( true ) : ExecutePatch() );
+			InitializePatcher( mainAppDirectory, mainAppVersionInfoURL );
+
+			if( checkForUpdates )
+				CheckForUpdates( true );
+			else
+				ExecutePatch();
 
 			return true;
 		}
 
 		private void InitializePatcher( string rootPath, string versionInfoURL )
 		{
-			patcher = SPTUtils.CreatePatcher( rootPath, versionInfoURL ).UseRepairPatch( true ).UseIncrementalPatch( true ).LogProgress( true );
+			patcher = SPTUtils.CreatePatcher( rootPath, versionInfoURL ).SetListener( patcherListener );
 
 			if( !string.IsNullOrEmpty( versionInfoRSA ) )
 				patcher.UseVersionInfoVerifier( ( ref string xml ) => XMLSigner.VerifyXMLContents( xml, versionInfoRSA ) );
@@ -211,13 +273,8 @@ namespace SimplePatchToolUnity
 				patcher.UsePatchInfoVerifier( ( ref string xml ) => XMLSigner.VerifyXMLContents( xml, patchInfoRSA ) );
 		}
 
-		private IEnumerator CheckForUpdates( bool checkVersionOnly )
+		private void CheckForUpdates( bool checkVersionOnly )
 		{
-			patchButton.interactable = false;
-			playButton.interactable = true;
-
-			patcher.LogProgress( false );
-
 			// = checkVersionOnly =
 			// true (default): only version number (e.g. 1.0) is compared against VersionInfo to see if there is an update
 			// false: hashes and sizes of the local files are compared against VersionInfo (if there are any different/missing files, we'll patch the app)
@@ -225,110 +282,92 @@ namespace SimplePatchToolUnity
 			{
 				Debug.Log( "Checking for updates..." );
 
-				while( patcher.IsRunning )
-				{
-					FetchLogsFromPatcher();
-					yield return null;
-				}
-
-				FetchLogsFromPatcher();
-
-				if( patcher.Result == PatchResult.AlreadyUpToDate )
-				{
-					// If launcher is already up-to-date, check if there is an update for the main app
-					if( isPatchingLauncher )
-						StartMainAppPatch( true );
-				}
-				else if( patcher.Result == PatchResult.Success )
-				{
-					// There is an update, enable the Patch button
-					patchButton.interactable = true;
-				}
-				else
-				{
-					// An error occurred, user can click the Patch button to try again
-					patchButton.interactable = true;
-				}
+				patchButton.interactable = false;
+				playButton.interactable = true;
 			}
 			else
 				Debug.LogWarning( "Operation could not be started; maybe it is already executing?" );
 		}
 
-		private IEnumerator ExecutePatch()
+		private void ExecutePatch()
 		{
-			patchButton.interactable = false;
-			playButton.interactable = false;
-
-			patcher.LogProgress( true );
-			if( patcher.Run( isPatchingLauncher ) )
+			if( patcher.Operation == PatchOperation.ApplyingSelfPatch )
+				ApplySelfPatch();
+			else if( patcher.Run( isPatchingLauncher ) )
 			{
 				Debug.Log( "Executing patch..." );
 
-				while( patcher.IsRunning )
-				{
-					FetchLogsFromPatcher();
-					yield return null;
-				}
-
-				FetchLogsFromPatcher();
-				playButton.interactable = true;
-
-				if( patcher.Result == PatchResult.AlreadyUpToDate )
-				{
-					// If launcher is already up-to-date, check if there is an update for the main app
-					if( isPatchingLauncher )
-						StartMainAppPatch( true );
-				}
-				else if( patcher.Result == PatchResult.Success )
-				{
-					// If patcher was self patching the launcher, start the self patcher executable
-					// Otherwise, we have just updated the main app successfully!
-					if( patcher.Operation == PatchOperation.SelfPatching )
-					{
-						string selfPatcherPath = SPTUtils.SelfPatcherExecutablePath;
-						if( !string.IsNullOrEmpty( selfPatcherPath ) && File.Exists( selfPatcherPath ) )
-							patcher.ApplySelfPatch( selfPatcherPath, PatchUtils.GetCurrentExecutablePath() );
-						else
-							patcherLogText.text = "Self patcher does not exist!";
-					}
-				}
-				else
-				{
-					// An error occurred, user can click the Patch button to try again
-					patchButton.interactable = true;
-				}
+				patchButton.interactable = false;
+				playButton.interactable = false;
 			}
 			else
 				Debug.LogWarning( "Operation could not be started; maybe it is already executing?" );
 		}
 
-		private void FetchLogsFromPatcher()
+		private void ApplySelfPatch()
 		{
-			string log = patcher.FetchLog();
-			while( log != null )
-			{
-				if( logToConsole )
-					Debug.Log( log );
+			patcher.ApplySelfPatch( selfPatcherPath, PatchUtils.GetCurrentExecutablePath() );
+		}
 
-				patcherLogText.text = log;
-				log = patcher.FetchLog();
+		private void CheckForUpdatesFinished()
+		{
+			if( patcher.Result == PatchResult.AlreadyUpToDate )
+			{
+				// If launcher is already up-to-date, check if there is an update for the main app
+				if( isPatchingLauncher )
+					StartMainAppPatch( true );
 			}
-
-			IOperationProgress progress = patcher.FetchProgress();
-			while( progress != null )
+			else if( patcher.Result == PatchResult.Success )
 			{
-				if( logToConsole )
-					Debug.Log( string.Concat( progress.Percentage, "% ", progress.ProgressInfo ) );
+				// There is an update, enable the Patch button
+				patchButton.interactable = true;
+			}
+			else
+			{
+				// An error occurred, user can click the Patch button to try again
+				patchButton.interactable = true;
+			}
+		}
 
-				patcherProgressText.text = progress.ProgressInfo;
-				patcherProgressbar.value = progress.Percentage;
+		private void PatchFinished()
+		{
+			playButton.interactable = true;
 
-				progress = patcher.FetchProgress();
+			if( patcher.Result == PatchResult.AlreadyUpToDate )
+			{
+				// If launcher is already up-to-date, check if there is an update for the main app
+				if( isPatchingLauncher )
+					StartMainAppPatch( true );
+			}
+			else if( patcher.Result == PatchResult.Success )
+			{
+				// If patcher was self patching the launcher, start the self patcher executable
+				// Otherwise, we have just updated the main app successfully
+				if( patcher.Operation == PatchOperation.SelfPatching )
+					ApplySelfPatch();
+			}
+			else
+			{
+				// An error occurred, user can click the Patch button to try again
+				patchButton.interactable = true;
 			}
 		}
 
 		private IEnumerator FetchPatchNotes()
 		{
+			// I find WWW more reliable while fetching patch notes since UnityWebRequest fails
+			// with "Cannot connect to destination host" error message half the time for me.
+			// But WWW is deprecated on Unity 2018.3, so use UnityWebRequest in that situation
+#if UNITY_2018_3_OR_NEWER
+			UnityWebRequest webRequest = UnityWebRequest.Get( patchNotesURL );
+			yield return webRequest.SendWebRequest();
+			
+			bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
+			if( !webRequestError )
+				patchNotesText.text = webRequest.downloadHandler.text;
+			else
+				Debug.LogError( "Can't fetch patch notes: " + webRequest.error );
+#else
 			WWW webRequest = new WWW( patchNotesURL );
 			yield return webRequest;
 
@@ -336,6 +375,7 @@ namespace SimplePatchToolUnity
 				patchNotesText.text = webRequest.text;
 			else
 				Debug.LogError( "Can't fetch patch notes: " + webRequest.error );
+#endif
 		}
 #endif
 	}

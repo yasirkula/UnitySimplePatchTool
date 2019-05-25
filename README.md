@@ -4,7 +4,7 @@
 
 **Forum Thread:** https://forum.unity.com/threads/simplepatchtool-open-source-patching-solution-for-standalone-platforms.542465/
 
-This plugin is a Unity port of the [SimplePatchTool library](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications. Before using this plugin, you are recommended to first see SimplePatchTool's documentation: https://github.com/yasirkula/SimplePatchTool
+This plugin is a Unity port of [SimplePatchTool](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications. Before using this plugin, you are recommended to first see SimplePatchTool's documentation: https://github.com/yasirkula/SimplePatchTool
 
 ## LICENSE
 
@@ -19,13 +19,13 @@ SimplePatchTool is licensed under the [MIT License](LICENSE); however, it uses e
 - import **SimplePatchTool.unitypackage** to your project
 - in **Edit-Project Settings-Player**, change **Api Compatibility Level** to **.NET 2.0** or higher (i.e. don't use *.NET 2.0 Subset*)
 - *(optional)* in **Edit-Project Settings-Player**, enable **Run In Background** so that SimplePatchTool can continue running while the application is minimized/not focused
-- you can now use **Window-Simple Patch Tool** to [create/update patches, sign/verify xml files and generate RSA key pair](https://github.com/yasirkula/SimplePatchTool/wiki):
+- you can now use **Window-Simple Patch Tool** to [create projects, generate patches and so on](https://github.com/yasirkula/SimplePatchTool/wiki):
 
 ![editor_window](Images/editor-window.png)
 
 ### Updating Dll's
 
-This plugin uses SimplePatchTool's **SimplePatchToolCore** and **SimplePatchToolSecurity** modules without any modifications; so, if you want, you can make any changes to [these modules](https://github.com/yasirkula/SimplePatchTool), rebuild them and replace the dll files at *Plugins/SimplePatchTool/DLL* with their updated versions.
+This plugin uses SimplePatchTool's **SimplePatchToolCore** and **SimplePatchToolSecurity** modules without any modifications; so, if you want, you can make any changes to [these modules](https://github.com/yasirkula/SimplePatchTool), rebuild them and replace the dll files at *Plugins/SimplePatchTool/DLL* with the updated ones.
 
 ### Unity-specific Changes
 
@@ -42,20 +42,6 @@ SimplePatchTool patcher = new SimplePatchTool( ... )
 
 Alternatively, you can call the [SPTUtils.CreatePatcher( string rootPath, string versionInfoURL )](Plugins/SimplePatchTool/Scripts/SPTUtils.cs) function which returns a Unity-compatible *SimplePatchTool* instance.
 
-### About Self Patcher Executable
-
-SimplePatchTool comes bundled with a self patcher executable on Windows platform. To add self patching support to macOS and/or Linux platforms, or to use a custom self patcher executable in your projects, you need to follow these steps:
-
-- [build the self patcher executable](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Self-Patcher-Executable)
-- move the self patcher executable and any of its dependencies to the following directory:
-  - **Windows:** Plugins/SimplePatchTool/Editor/Windows
-  - **macOS:** Plugins/SimplePatchTool/Editor/OSX
-  - **Linux:** Plugins/SimplePatchTool/Editor/Linux
-    - these files will [automatically be copied](Plugins/SimplePatchTool/Editor/PatcherPostProcessBuild.cs) to a subdirectory called [SPPatcher](https://github.com/yasirkula/SimplePatchTool/blob/master/SimplePatchToolCore/Utilities/PatchParameters.cs) after building the project to standalone (if you want, you can set **PatcherPostProcessBuild.ENABLED** to *false* to disable this feature)
-- update the name of the self patcher executable in [SPTUtils.SelfPatcherExecutablePath](Plugins/SimplePatchTool/Scripts/SPTUtils.cs) property
-- you can now run the self patcher like this: `patcher.ApplySelfPatch( SPTUtils.SelfPatcherExecutablePath );`
-- or like this, if you want to automatically restart the game/launcher after self patching is completed: `patcher.ApplySelfPatch( SPTUtils.SelfPatcherExecutablePath, PatchUtils.GetCurrentExecutablePath() );`
-
 ## EXAMPLES
 
 Some of the example scenes use the [PatcherUI](Plugins/SimplePatchTool/Demo/PatcherUI.cs) prefab to show *SimplePatchTool*'s progress to the user; feel free to use it in your own projects, as well:
@@ -63,8 +49,6 @@ Some of the example scenes use the [PatcherUI](Plugins/SimplePatchTool/Demo/Patc
 ![patcher_ui](Images/patcher-ui.png)
 
 If you [sign your *VersionInfo* and/or *PatchInfo* files with private RSA key(s)](https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches), you can paste their corresponding public RSA key(s) to the **Version Info RSA** and/or **Patch Info RSA** variables in the demo scenes.
-
-If you plan to add self patching support to your app or test a demo scene that makes use of self patching, make sure that [your target platform's self patcher executable is set up](#about-self-patcher-executable).
 
 ### [PatcherControlPanelDemo](Plugins/SimplePatchTool/Demo/PatcherControlPanelDemo.cs)
 
@@ -74,44 +58,60 @@ This scene lets you tweak some variables at runtime to quickly test some patches
 
 ### [SelfPatchingAppDemo](Plugins/SimplePatchTool/Demo/SelfPatchingAppDemo.cs)
 
-![patcher_ui](Images/self-patching-app-demo.png)
-
-**Video tutorial:** https://www.youtube.com/watch?v=Gjl6my7rVSI
+~~**Video tutorial:** https://www.youtube.com/watch?v=Gjl6my7rVSI~~ (legacy tutorial)
 
 This scene allows you to quickly create and test a self patching app. It can't run on the Editor.
 
-You can test this scene as following:
+You can test this scene as follows:
 
 - follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) and paste VersionInfo's url to the **Version Info URL** variable of *SelfPatchingAppUI* in the Inspector
 - tweak the value of **Check Version Only** as you like
-- build this scene to an empty directory (let's say *SelfPatcherBuild*)
-- [create a patch using the *SelfPatcherBuild* directory as *Root path*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- don't forget to complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part
-- if you had previously set *Check Version Only* to *false*, try deleting a redundant file from *SelfPatcherBuild* (e.g. something from the *Mono/etc* subdirectory). When you launch the app, it will automatically detect this change and prompt you to update/repair itself
-- now, make some changes in the scene in Unity (e.g. add some cubes that are visible to the camera) and build it to another empty directory (let's say *SelfPatcherBuild2*)
-- [create a patch using *SelfPatcherBuild2* as *Root path* and *SelfPatcherBuild* as *Previous version path* while also increasing the *Project version*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- if you get an error message like `ERROR: directory ... is not empty` while creating the patch, make sure to point *Output path* to an empty directory
-- if you launch the app, you'll see that it'll detect the update and prompt you to update itself to the latest version
+- [create a project for this app](https://github.com/yasirkula/SimplePatchTool/wiki/Project:-Create)
+- as this app uses self patching, we need a self patcher executable: [create a self patcher executable](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Self-Patcher-Executable) and put it inside the *SelfPatcher* directory of the project
+- enter the name of the self patcher executable to the **Self Patcher Executable** variable of *SelfPatchingAppUI* in the Inspector
+- create a subdirectory called `1.0` inside the *Versions* directory of the project
+- build this scene into the `1.0` subdirectory
+- follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended) to create a patch, upload it to the server, update download links in VersionInfo and etc.
+- you've created your first patch, great! We should now create a second patch to test the patcher. First, make some changes to the scene (e.g. add some cubes around, change the background of the camera)
+- build the scene into another subdirectory called `1.1` inside the *Versions* directory of the project
+- create another patch following [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended)
+- if you launch the 1.0 version of the app now, you'll see that it'll detect the 1.1 update and prompt you to update itself to that version, well done!
+- also, if you had previously set *Check Version Only* to *false*, try deleting a redundant file from the app's Data directory (e.g. something from the *Mono/etc* subdirectory). When you launch the app, it will automatically detect the absence of the file and prompt you to update/repair itself
 
 ### [LauncherDemo](Plugins/SimplePatchTool/Demo/LauncherDemo.cs)
 
-![patcher_ui](Images/launcher-demo.png)
+![launcher_ui](Images/launcher-demo.png)
 
-**Video tutorial:** https://www.youtube.com/watch?v=P7iUQ-n3EQA
+~~**Video tutorial:** https://www.youtube.com/watch?v=P7iUQ-n3EQA~~ (legacy tutorial)
 
 This scene allows you to quickly create and test a launcher that can self patch itself in addition to patching and launching a main app. Launcher first checks if it is up-to-date (if not, self patches itself) and then checks if the main app is up-to-date (if not, patches it). If you don't provide a VersionInfo url for one of these patches, that patch will be skipped. This scene can't run on the Editor.
 
-You can test this scene as following (you are recommended to test the [SelfPatchingAppDemo](#selfpatchingappdemo) scene first):
+You can test this scene as follows (you are recommended to test the [SelfPatchingAppDemo](#selfpatchingappdemo) scene first):
 
-- [read these instructions to understand the recommended project structure for launchers](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure)
+- see the [recommended project structure for launchers](https://github.com/yasirkula/SimplePatchTool/wiki/Recommended-Project-Structure)
 - [generate versionInfoURL's](https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL) for the launcher and the main app and paste them to the **Launcher Version Info URL** and **Main App Version Info URL** variables of *LauncherUI* in the Inspector
-- decide a **Main App Subdirectory** (let's say *MainAppBuild*) and **Main App Executable** (let's say *MainApp.exe*)
-- build this scene to an empty directory (let's say *LauncherBuild*)
-- build another scene/project to another empty directory (*MainAppBuild*) and name the executable *MainApp.exe* (this directory will be our main app)
-- [create a patch for the launcher using *LauncherBuild* directory as *Root path* while adding `MainAppBuild/` to the *Ignored paths*](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#via-unity-plugin)
-- complete the [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part, as well
-- create another patch using *MainAppBuild* as *Root path* (which will be the main app's patch) and complete [After Creating a New Patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#2-after-creating-a-new-patch) part for it, as well (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
-- now create a copy of the *LauncherBuild* directory and copy&paste the *MainAppBuild* directory into it to test the launcher
-- try deleting a redundant file of the launcher (e.g. something from the *Mono/etc* subdirectory). When you launch the launcher, it will automatically detect this change and prompt you to update/repair itself
-- try deleting a file from *MainAppBuild* and hit the *Repair Game* button in the launcher to repair the main app
-- try creating newer versions of the launcher and/or the main app (see [SelfPatchingAppDemo](#selfpatchingappdemo) to learn the process) and verify that the old launcher correctly patches itself and/or the main app to the newest version(s)
+- decide a **Main App Subdirectory** (let's say *MainApp*) and **Main App Executable** (let's say *MainApp.exe*)
+- [create a project for the launcher](https://github.com/yasirkula/SimplePatchTool/wiki/Project:-Create)
+- add `MainApp/` to the *IgnoredPaths* of the project's *Settings.xml* (also give it a meaningful `<Name>` like *Launcher*)
+- as the launcher uses self patching, we need a self patcher executable: [create a self patcher executable](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Self-Patcher-Executable) and put it inside the *SelfPatcher* directory of the project
+- enter the name of the self patcher executable to the **Self Patcher Executable** variable of *LauncherUI* in the Inspector
+- create a subdirectory called `1.0` inside the *Versions* directory of the project
+- build this scene into the `1.0` subdirectory
+- follow [these steps](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended) to create a patch for the launcher, upload it to the server, update download links in VersionInfo and etc.
+- you've created your launcher's first patch, awesome! Now let's generate a patch for the main app, as well
+- [create another project](https://github.com/yasirkula/SimplePatchTool/wiki/Project:-Create), this time for the main app
+- create a subdirectory called `0.1` inside the *Versions* directory of the project
+- build another one of your projects, name the executable as *MainApp.exe* and move the generated executables and libraries into the `0.1` subdirectory
+- follow [the same steps](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended) to create a patch for the main app (you are recommended to keep the launcher's and the main app's patch files in separate directories on the server for clarity)
+- if you launch your launcher now, launcher should be able to detect the absence of the main app and prompt you to download/patch it (try not to launch the executable inside the `1.0` subdirectory because it will be used to create incremental patches later on, instead create a copy of that directory on some other location)
+- after letting the launcher download the main app, try deleting a file from *MainApp* and hit the *Repair Game* button in the launcher to test repairing the main app
+- make some changes to the launcher's user interface and build the scene into another subdirectory called `1.1` inside the *Versions* directory of the launcher's project
+- [create another patch](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended) for the launcher
+- if you launch the 1.0 version of the launcher now, you'll see that it'll detect the 1.1 update and prompt you to update itself to that version, well done!
+- feel free to create a new version of the main app, as well
+
+### [MultiGameLauncherDemo](Plugins/SimplePatchTool/Demo/MultiGameLauncherDemo.cs)
+
+![launcher_ui](Images/multi-game-launcher-demo.png)
+
+An example scene to demonstrate how you can use SimplePatchTool with your own Steam-like game hubs. Each game's configuration is stored in the *Games* variable of the *LauncherUI* object. You are recommended to test the [LauncherDemo](#launcherdemo) scene prior to testing this scene.

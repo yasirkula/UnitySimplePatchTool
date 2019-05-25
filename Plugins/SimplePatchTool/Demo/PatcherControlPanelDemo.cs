@@ -12,6 +12,10 @@ namespace SimplePatchToolUnity
 	{
 		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
+		[SerializeField]
+		[Tooltip( "Name of the self patcher executable" )]
+		private string selfPatcherExecutable = "SelfPatcher.exe";
+
 		[Header( "XML Verifier Keys (Optional)" )]
 		[SerializeField]
 		[TextArea]
@@ -45,6 +49,15 @@ namespace SimplePatchToolUnity
 		private Toggle incrementalPatchInput;
 
 		[SerializeField]
+		private Toggle installerPatchInput;
+
+		[SerializeField]
+		private Toggle verifyServerFilesInput;
+
+		[SerializeField]
+		private Toggle checkMultipleInstancesInput;
+
+		[SerializeField]
 		private Button patchButton;
 
 		private void Awake()
@@ -73,7 +86,8 @@ namespace SimplePatchToolUnity
 #endif
 
 				SimplePatchTool patcher = SPTUtils.CreatePatcher( rootPathInput.text, versionInfoURLInput.text ).
-					UseRepairPatch( repairPatchInput.isOn ).UseIncrementalPatch( incrementalPatchInput.isOn ).LogProgress( true );
+					UseRepairPatch( repairPatchInput.isOn ).UseIncrementalPatch( incrementalPatchInput.isOn ).UseInstallerPatch( installerPatchInput.isOn ).
+					VerifyFilesOnServer( verifyServerFilesInput.isOn ).CheckForMultipleRunningInstances( checkMultipleInstancesInput.isOn );
 
 				if( !string.IsNullOrEmpty( versionInfoRSA ) )
 					patcher.UseVersionInfoVerifier( ( ref string xml ) => XMLSigner.VerifyXMLContents( xml, versionInfoRSA ) );
@@ -87,7 +101,7 @@ namespace SimplePatchToolUnity
 					if( !isPatcherActive )
 						runningPatcher = Instantiate( patcherUiPrefab );
 
-					runningPatcher.Initialize( patcher );
+					runningPatcher.Initialize( patcher, selfPatcherExecutable );
 				}
 				else
 					Debug.Log( "Operation could not be started; maybe it is already executing?" );

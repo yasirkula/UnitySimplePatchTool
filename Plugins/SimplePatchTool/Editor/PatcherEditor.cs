@@ -1,6 +1,5 @@
 ﻿using SimplePatchToolCore;
 using SimplePatchToolSecurity;
-using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -9,241 +8,157 @@ namespace SimplePatchToolUnity
 {
 	public class PatcherEditor : EditorWindow
 	{
-		private readonly string[] TABS = new string[] { "CREATE", "UPDATE", "SECURITY" };
-		private const string CONSOLE_COMMAND_IGNORED_PATHS_HOLDER = "PATH/TO/ignoredPaths.txt";
-
-		// Create fields
-		private string c_RootPath = "", c_PrevRoot = "", c_OutputPath = "", c_Name = "", c_Version = "", c_IgnoredPaths = "*output_log.txt\n";
-		private bool c_CreateRepair = true;
-
-		// Update fields
-		private string u_versionInfoPath = "", u_downloadLinksPath = "", u_downloadLinksContents = "\n\n";
-
-		// Security fields
-		private string s_xmlPath = "", s_publicKeyPath = "", s_PrivateKeyPath = "";
-
-		private int activeTab;
+		private string projectRootPath;
 		private Vector2 scrollPosition;
 
-		private PatchCreator patchCreator;
+		private ProjectManager project;
+		private bool? projectExists = null;
 
 		[MenuItem( "Window/Simple Patch Tool", priority = 20 )]
 		private static void Initialize()
 		{
 			PatcherEditor window = GetWindow<PatcherEditor>();
 			window.titleContent = new GUIContent( "Patcher" );
-			window.minSize = new Vector2( 300f, 280f );
-
-			window.c_Name = PatchUtils.IsProjectNameValid( Application.productName ) ? Application.productName : "MyProject";
-			window.c_Version = Application.version;
+			window.minSize = new Vector2( 300f, 310f );
 
 			window.Show();
+		}
+
+		private void OnEnable()
+		{
+			projectRootPath = EditorPrefs.GetString( "SPT_ROOT", "" );
+			CheckProjectExists();
 		}
 
 		private void OnDisable()
 		{
 			EditorApplication.update -= OnUpdate;
+			EditorPrefs.SetString( "SPT_ROOT", projectRootPath );
 		}
 
 		private void OnGUI()
 		{
 			scrollPosition = GUILayout.BeginScrollView( scrollPosition );
-			activeTab = GUILayout.Toolbar( activeTab, TABS, GUILayout.Height( 25f ) );
+
 			GUILayout.BeginVertical();
 			GUILayout.Space( 5f );
 
-			if( activeTab == 0 )
-				DrawCreateTab();
-			else if( activeTab == 1 )
-				DrawUpdateTab();
-			else if( activeTab == 2 )
-				DrawSecurityTab();
+			EditorGUI.BeginChangeCheck();
+			projectRootPath = PathField( "Project directory: ", projectRootPath, true );
+			if( EditorGUI.EndChangeCheck() )
+				CheckProjectExists();
 
-			GUILayout.EndVertical();
-			GUILayout.EndScrollView();
-		}
+			GUILayout.Space( 5f );
 
-		private void DrawCreateTab()
-		{
-			c_RootPath = PathField( "Root path: ", c_RootPath, true );
-			c_PrevRoot = PathField( "Previous version path: ", c_PrevRoot, true );
-			c_OutputPath = PathField( "Output path: ", c_OutputPath, true );
+			GUI.enabled = ( project == null || !project.IsRunning ) && projectExists.HasValue && !projectExists.Value;
 
-			c_Name = EditorGUILayout.TextField( "Project name: ", c_Name );
-			c_Version = EditorGUILayout.TextField( "Project version: ", c_Version );
-
-			c_CreateRepair = EditorGUILayout.Toggle( "Create repair patch: ", c_CreateRepair );
-
-			GUILayout.Label( "Ignored paths (one path per line): " );
-			c_IgnoredPaths = EditorGUILayout.TextArea( c_IgnoredPaths );
-
-			GUILayout.Space( 10f );
-
-			if( GUILayout.Button( "Create Patch", GUILayout.Height( 35f ) ) )
+			if( GUILayout.Button( "Create Project", GUILayout.Height( 30 ) ) )
 			{
-				c_RootPath = c_RootPath.Trim();
-				c_PrevRoot = c_PrevRoot.Trim();
-				c_OutputPath = c_OutputPath.Trim();
-				c_IgnoredPaths = c_IgnoredPaths.Trim();
-				c_Name = c_Name.Trim();
-				c_Version = c_Version.Trim();
+				project = new ProjectManager( projectRootPath );
+				project.CreateProject();
 
-				if( c_RootPath.Length == 0 || c_OutputPath.Length == 0 || c_Name.Length == 0 || c_Version.Length == 0 )
-					return;
+				ProjectInfo projectInfo = PatchUtils.GetProjectInfoFromPath( project.projectInfoPath );
+				projectInfo.IgnoredPaths.Add( "*output_log.txt" );
+				PatchUtils.SerializeProjectInfoToXML( projectInfo, project.projectInfoPath );
 
-				patchCreator = new PatchCreator( c_RootPath, c_OutputPath, c_Name, c_Version );
-				patchCreator.CreateIncrementalPatch( c_PrevRoot.Length > 0, c_PrevRoot ).CreateRepairPatch( c_CreateRepair );
+				SecurityUtils.CreateRSAKeyPairInDirectory( project.utilitiesPath );
 
-				if( c_IgnoredPaths.Length > 0 )
-					patchCreator.AddIgnoredPaths( c_IgnoredPaths.Replace( "\r", "" ).Split( '\n' ) );
+				EditorApplication.update -= OnUpdate;
+				EditorApplication.update += OnUpdate;
 
-				if( patchCreator.Run() )
+				CheckProjectExists();
+			}
+
+			GUI.enabled = ( project == null || !project.IsRunning ) && projectExists.HasValue && projectExists.Value;
+
+			if( GUILayout.Button( "Generate Patch", GUILayout.Height( 30 ) ) )
+			{
+				project = new ProjectManager( projectRootPath );
+				if( project.GeneratePatch() )
 				{
-					Debug.Log( "<b>Patch creator started</b>" );
+					Debug.Log( "<b>Operation started</b>" );
 
 					EditorApplication.update -= OnUpdate;
 					EditorApplication.update += OnUpdate;
 				}
 				else
-					Debug.LogWarning( "<b>Couldn't start patch creator. Maybe it is already running?</b>" );
+					Debug.LogWarning( "<b>Couldn't start the operation. Maybe it is already running?</b>" );
 			}
 
-			if( GUILayout.Button( "Generate Console Command", GUILayout.Height( 25f ) ) )
+			DrawHorizontalLine();
+
+			if( GUILayout.Button( "Update Download Links", GUILayout.Height( 30 ) ) )
 			{
-				string command = string.Format( "Patcher create -root=\"{0}\" -out=\"{1}\" -name=\"{2}\" -version=\"{3}\"", c_RootPath, c_OutputPath, c_Name, c_Version );
-				if( c_PrevRoot.Length > 0 )
-					command += string.Concat( " -prevRoot=\"", c_PrevRoot, "\"" );
-				if( c_IgnoredPaths.Length > 0 )
-					command += string.Concat( " -ignoredPaths=\"", CONSOLE_COMMAND_IGNORED_PATHS_HOLDER, "\"" );
-				if( !c_CreateRepair )
-					command += " -dontCreateRepairPatch";
+				project = new ProjectManager( projectRootPath );
+				project.UpdateDownloadLinks();
 
-				Debug.Log( command );
-
-				if( c_IgnoredPaths.Length > 0 )
-					Debug.Log( string.Concat( "You have to insert the following ignored path(s) to \"", CONSOLE_COMMAND_IGNORED_PATHS_HOLDER, "\":\n", c_IgnoredPaths ) );
+				EditorApplication.update -= OnUpdate;
+				EditorApplication.update += OnUpdate;
 			}
-		}
 
-		private void DrawUpdateTab()
-		{
-			u_versionInfoPath = PathField( "VersionInfo path: ", u_versionInfoPath, false );
-			u_downloadLinksPath = PathField( "Download links holder: ", u_downloadLinksPath, false );
+			DrawHorizontalLine();
 
-			GUILayout.Label( "Or, paste download links here (one link per line): " );
-			u_downloadLinksContents = EditorGUILayout.TextArea( u_downloadLinksContents );
-
-			if( GUILayout.Button( "Update Download Links", GUILayout.Height( 35f ) ) )
+			if( GUILayout.Button( "Sign XMLs", GUILayout.Height( 30 ) ) )
 			{
-				u_versionInfoPath = u_versionInfoPath.Trim();
-				u_downloadLinksPath = u_downloadLinksPath.Trim();
-				u_downloadLinksContents = u_downloadLinksContents.Trim();
+				ProjectManager project = new ProjectManager( projectRootPath );
+				SecurityUtils.SignXMLsWithKeysInDirectory( project.GetXMLFiles( true, true ), project.utilitiesPath );
 
-				if( u_versionInfoPath.Length == 0 || ( u_downloadLinksPath.Length == 0 && u_downloadLinksContents.Length == 0 ) )
-					return;
+				EditorUtility.DisplayDialog( "Security", "Don't share your private key with unknown parties!", "Got it!" );
+				Debug.Log( "<b>Operation successful...</b>" );
+			}
 
-				PatchUpdater patchUpdater = new PatchUpdater( u_versionInfoPath, ( log ) => Debug.Log( log ) );
-				bool updateSuccessful;
-				if( u_downloadLinksPath.Length > 0 )
-					updateSuccessful = patchUpdater.UpdateDownloadLinks( u_downloadLinksPath );
-				else
+			if( GUILayout.Button( "Verify Signed XMLs", GUILayout.Height( 30 ) ) )
+			{
+				string[] invalidXmls;
+
+				ProjectManager project = new ProjectManager( projectRootPath );
+				if( !SecurityUtils.VerifyXMLsWithKeysInDirectory( project.GetXMLFiles( true, true ), project.utilitiesPath, out invalidXmls ) )
 				{
-					Dictionary<string, string> downloadLinks = new Dictionary<string, string>();
-					string[] downloadLinksSplit = u_downloadLinksContents.Replace( "\r", "" ).Split( '\n' );
-					for( int i = 0; i < downloadLinksSplit.Length; i++ )
-					{
-						string downloadLinkRaw = downloadLinksSplit[i].Trim();
-						if( string.IsNullOrEmpty( downloadLinkRaw ) )
-							continue;
-
-						int separatorIndex = downloadLinkRaw.LastIndexOf( ' ' );
-						if( separatorIndex == -1 )
-							continue;
-
-						downloadLinks[downloadLinkRaw.Substring( 0, separatorIndex )] = downloadLinkRaw.Substring( separatorIndex + 1 );
-					}
-
-					updateSuccessful = patchUpdater.UpdateDownloadLinks( downloadLinks );
+					Debug.Log( "<b>The following XMLs could not be verified:</b>" );
+					for( int i = 0; i < invalidXmls.Length; i++ )
+						Debug.Log( invalidXmls[i] );
 				}
-
-				if( updateSuccessful )
-					patchUpdater.SaveChanges();
-
-				Debug.Log( "Result: " + updateSuccessful );
-			}
-		}
-
-		private void DrawSecurityTab()
-		{
-			s_xmlPath = PathField( "XML file: ", s_xmlPath, false );
-			s_publicKeyPath = PathField( "Public RSA key: ", s_publicKeyPath, false );
-			s_PrivateKeyPath = PathField( "Private RSA key: ", s_PrivateKeyPath, false );
-
-			if( GUILayout.Button( "Sign XML", GUILayout.Height( 35f ) ) )
-			{
-				s_xmlPath = s_xmlPath.Trim();
-				s_PrivateKeyPath = s_PrivateKeyPath.Trim();
-
-				if( s_xmlPath.Length == 0 || s_PrivateKeyPath.Length == 0 )
-					return;
-
-				XMLSigner.SignXMLFile( s_xmlPath, File.ReadAllText( s_PrivateKeyPath ) );
+				else
+					Debug.Log( "<b>All XMLs are verified...</b>" );
 			}
 
-			if( GUILayout.Button( "Verify XML", GUILayout.Height( 35f ) ) )
-			{
-				s_xmlPath = s_xmlPath.Trim();
-				s_publicKeyPath = s_publicKeyPath.Trim();
+			GUI.enabled = true;
 
-				if( s_xmlPath.Length == 0 || s_publicKeyPath.Length == 0 )
-					return;
+			DrawHorizontalLine();
 
-				Debug.Log( "Is genuine: " + XMLSigner.VerifyXMLFile( s_xmlPath, File.ReadAllText( s_publicKeyPath ) ) );
-			}
+			if( GUILayout.Button( "Help", GUILayout.Height( 25 ) ) )
+				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki" );
 
-			GUILayout.Space( 10f );
+			if( GUILayout.Button( "Open Legacy Window", GUILayout.Height( 25 ) ) )
+				PatcherEditorLegacy.Initialize();
 
-			EditorGUILayout.HelpBox( "Store your private key in a safe location and don't share it with unknown parties!", MessageType.Warning );
-
-			if( GUILayout.Button( "Create RSA Key Pair", GUILayout.Height( 35f ) ) )
-			{
-				string selectedPath = EditorUtility.OpenFolderPanel( "Create keys at", "", "" );
-				if( string.IsNullOrEmpty( selectedPath ) || !Directory.Exists( selectedPath ) )
-					return;
-
-				string publicKey, privateKey;
-				SecurityUtils.CreateRSAKeyPair( out publicKey, out privateKey );
-
-				File.WriteAllText( Path.Combine( selectedPath, "rsa_public.bytes" ), publicKey );
-				File.WriteAllText( Path.Combine( selectedPath, "rsa_private.bytes" ), privateKey );
-
-				AssetDatabase.Refresh();
-			}
+			GUILayout.EndVertical();
+			GUILayout.EndScrollView();
 		}
 
 		private void OnUpdate()
 		{
-			if( patchCreator == null )
+			if( project == null )
 			{
 				EditorApplication.update -= OnUpdate;
 				return;
 			}
 
-			string log = patchCreator.FetchLog();
+			string log = project.FetchLog();
 			while( log != null )
 			{
 				Debug.Log( log );
-				log = patchCreator.FetchLog();
+				log = project.FetchLog();
 			}
 
-			if( !patchCreator.IsRunning )
+			if( !project.IsRunning )
 			{
-				if( patchCreator.Result == PatchResult.Failed )
+				if( project.Result == PatchResult.Failed )
 					Debug.Log( "<b>Operation failed...</b>" );
 				else
 					Debug.Log( "<b>Operation successful...</b>" );
 
-				patchCreator = null;
+				project = null;
 				EditorApplication.update -= OnUpdate;
 			}
 		}
@@ -263,6 +178,29 @@ namespace SimplePatchToolUnity
 			GUILayout.EndHorizontal();
 
 			return path;
+		}
+
+		private void CheckProjectExists()
+		{
+			projectRootPath = projectRootPath == null ? "" : projectRootPath.Trim();
+
+			if( string.IsNullOrEmpty( projectRootPath ) )
+				projectExists = null;
+			else
+			{
+				DirectoryInfo projectDir = new DirectoryInfo( projectRootPath );
+				if( !projectDir.Exists )
+					projectExists = false;
+				else
+					projectExists = projectDir.GetFiles( PatchParameters.PROJECT_SETTINGS_FILENAME ).Length > 0;
+			}
+		}
+
+		private void DrawHorizontalLine()
+		{
+			GUILayout.Space( 5 );
+			GUILayout.Box( "", GUILayout.ExpandWidth( true ), GUILayout.Height( 1 ) );
+			GUILayout.Space( 5 );
 		}
 	}
 }

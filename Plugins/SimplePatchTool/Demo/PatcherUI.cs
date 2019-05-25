@@ -1,10 +1,10 @@
 ﻿#if UNITY_EDITOR || UNITY_STANDALONE
 using SimplePatchToolCore;
-#endif
 using System.Collections;
 using System.IO;
-using UnityEngine;
 using UnityEngine.UI;
+#endif
+using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
@@ -15,7 +15,7 @@ namespace SimplePatchToolUnity
 #if UNITY_EDITOR || UNITY_STANDALONE
 		[SerializeField]
 		[Tooltip( "Should SimplePatchTool logs be logged to console" )]
-		private bool logToConsole = true;
+		private bool logToConsole = false;
 
 		[SerializeField]
 		private GameObject patchPanel;
@@ -30,6 +30,9 @@ namespace SimplePatchToolUnity
 		private Slider progressSlider;
 
 		[SerializeField]
+		private Slider overallProgressSlider;
+
+		[SerializeField]
 		private Text progressText;
 
 		[SerializeField]
@@ -41,6 +44,8 @@ namespace SimplePatchToolUnity
 		[SerializeField]
 		private Text patcherButtonLabel;
 
+		private string selfPatcherExecutable;
+
 		public SimplePatchTool Patcher { get; private set; }
 
 		private void Awake()
@@ -49,7 +54,7 @@ namespace SimplePatchToolUnity
 			patcherButton.onClick.AddListener( PatchResultButtonClicked );
 		}
 
-		public void Initialize( SimplePatchTool patcher )
+		public void Initialize( SimplePatchTool patcher, string selfPatcherExecutable = "SelfPatcher.exe" )
 		{
 			if( patcher == null )
 				return;
@@ -60,9 +65,12 @@ namespace SimplePatchToolUnity
 			logText.text = string.Empty;
 			progressText.text = string.Empty;
 			progressSlider.value = 0f;
+			overallProgressSlider.value = 0f;
 			patcherButtonLabel.text = "Cancel";
 
 			Patcher = patcher;
+			this.selfPatcherExecutable = selfPatcherExecutable;
+
 			StartCoroutine( PatchCoroutine() );
 		}
 
@@ -129,6 +137,13 @@ namespace SimplePatchToolUnity
 
 				progress = Patcher.FetchProgress();
 			}
+
+			IOperationProgress overallProgress = Patcher.FetchOverallProgress();
+			while( overallProgress != null )
+			{
+				overallProgressSlider.value = overallProgress.Percentage;
+				overallProgress = Patcher.FetchOverallProgress();
+			}
 		}
 
 		private void PatchResultButtonClicked()
@@ -145,7 +160,7 @@ namespace SimplePatchToolUnity
 			//}
 			else if( Patcher.Result == PatchResult.Success && Patcher.Operation == PatchOperation.SelfPatching )
 			{
-				string selfPatcherPath = SPTUtils.SelfPatcherExecutablePath;
+				string selfPatcherPath = PatchUtils.GetDefaultSelfPatcherExecutablePath( selfPatcherExecutable );
 				if( !string.IsNullOrEmpty( selfPatcherPath ) && File.Exists( selfPatcherPath ) )
 					Patcher.ApplySelfPatch( selfPatcherPath, PatchUtils.GetCurrentExecutablePath() );
 				else
