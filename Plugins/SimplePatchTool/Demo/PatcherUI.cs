@@ -13,6 +13,7 @@ namespace SimplePatchToolUnity
 	{
 		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
+#pragma warning disable 0649
 		[SerializeField]
 		[Tooltip( "Should SimplePatchTool logs be logged to console" )]
 		private bool logToConsole = false;
@@ -43,6 +44,7 @@ namespace SimplePatchToolUnity
 
 		[SerializeField]
 		private Text patcherButtonLabel;
+#pragma warning restore 0649
 
 		private string selfPatcherExecutable;
 

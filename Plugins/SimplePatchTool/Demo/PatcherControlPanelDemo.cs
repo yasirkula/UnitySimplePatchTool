@@ -12,6 +12,7 @@ namespace SimplePatchToolUnity
 	{
 		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
+#pragma warning disable 0649
 		[SerializeField]
 		[Tooltip( "Name of the self patcher executable" )]
 		private string selfPatcherExecutable = "SelfPatcher.exe";
@@ -59,6 +60,7 @@ namespace SimplePatchToolUnity
 
 		[SerializeField]
 		private Button patchButton;
+#pragma warning restore 0649
 
 		private void Awake()
 		{

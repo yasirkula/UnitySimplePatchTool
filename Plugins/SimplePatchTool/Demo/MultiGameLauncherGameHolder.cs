@@ -11,6 +11,7 @@ namespace SimplePatchToolUnity
 #if UNITY_EDITOR || UNITY_STANDALONE
 		public delegate void ButtonClickDelegate( MultiGameLauncherGameHolder gameHolder );
 
+#pragma warning disable 0649
 		[SerializeField]
 		private Image iconHolder;
 
@@ -22,6 +23,7 @@ namespace SimplePatchToolUnity
 
 		[SerializeField]
 		private Button playButton;
+#pragma warning restore 0649
 
 		public MultiGameLauncherDemo.GameConfiguration Configuration { get; private set; }
 

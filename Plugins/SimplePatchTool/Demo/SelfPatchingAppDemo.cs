@@ -15,6 +15,7 @@ namespace SimplePatchToolUnity
 	{
 		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
+#pragma warning disable 0649
 		[Header( "Patcher Parameters" )]
 		[SerializeField]
 		private string versionInfoURL;
@@ -51,6 +52,7 @@ namespace SimplePatchToolUnity
 
 		[SerializeField]
 		private Button dismissButton;
+#pragma warning restore 0649
 
 		private SimplePatchTool patcher;
 		private static bool executed = false;

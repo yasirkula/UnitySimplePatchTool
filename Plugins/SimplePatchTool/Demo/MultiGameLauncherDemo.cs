@@ -5,7 +5,9 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using UnityEngine.UI;
+#if UNITY_2018_3_OR_NEWER
 using UnityEngine.Networking;
+#endif
 using Debug = UnityEngine.Debug;
 #endif
 using UnityEngine;
@@ -17,6 +19,7 @@ namespace SimplePatchToolUnity
 	{
 		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
+#pragma warning disable 0649
 		[System.Serializable]
 		public class GameConfiguration
 		{
@@ -140,6 +143,7 @@ namespace SimplePatchToolUnity
 
 		[SerializeField]
 		private Button websiteButton;
+#pragma warning restore 0649
 
 		private string launcherDirectory;
 		private string gamesDirectory;
