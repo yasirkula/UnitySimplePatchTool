@@ -13,8 +13,8 @@ namespace SimplePatchToolUnity
 		private const string CONSOLE_COMMAND_IGNORED_PATHS_HOLDER = "PATH/TO/ignoredPaths.txt";
 
 		// Create fields
-		private string c_RootPath = "", c_PrevRoot = "", c_OutputPath = "", c_Name = "", c_Version = "", c_IgnoredPaths = "*output_log.txt\n";
-		private bool c_CreateRepair = true, c_CreateInstaller = true;
+		private string c_RootPath = "", c_PrevRoot = "", c_PrevOutputPath = "", c_OutputPath = "", c_Name = "", c_Version = "", c_IgnoredPaths = "*output_log.txt\n";
+		private bool c_CreateRepair = true, c_CreateInstaller = true, c_SkipUnchangedPatchFiles = false;
 		private CompressionFormat c_RepairComp = CompressionFormat.LZMA, c_IncrementalComp = CompressionFormat.LZMA, c_InstallerComp = CompressionFormat.LZMA;
 
 		// Update fields
@@ -22,6 +22,19 @@ namespace SimplePatchToolUnity
 
 		// Security fields
 		private string s_xmlPath = "", s_publicKeyPath = "", s_PrivateKeyPath = "";
+
+		// Labels of the path fields
+		private readonly GUIContent rootPathGUI = new GUIContent( "Root path: ", "Path of the up-to-date (latest) version/build of your application" );
+		private readonly GUIContent prevRootGUI = new GUIContent( "Previous version path: ", "(Optional) Path of the previous version/build of your application. Providing a path will create an incremental patch. If this is the first release of your app, leave it blank" );
+		private readonly GUIContent prevOutputPathGUI = new GUIContent( "Previous version output path: ", "(Optional) Path of the directory that holds the previous version's patch files (the root directory that holds VersionInfo.info and folders like RepairPatch). If provided, repair patch files for unchanged files will simply be copied from the previous version's patch files instead of being recalculated. If this is the first release of your app, leave it blank" );
+		private readonly GUIContent outputPathGUI = new GUIContent( "Output path: ", "Patch files will be generated in this directory, must be empty" );
+		private readonly GUIContent createIncrementalGUI = new GUIContent( "Create incremental patch: ", "This value shows whether or not an incremental patch will be generated. For an incremental patch to be generated, \"Previous version path\" must not be blank" );
+		private readonly GUIContent skipUnchangedPatchFilesGUI = new GUIContent( "Skip unchanged patch files: ", "If set to true, patch files won't be generated for files that didn't change since the last version. This could reduce bandwidth usage while uploading the generated patch files to the server. Note that if \"Previous version output path\" is blank, this value will have no effect" );
+		private readonly GUIContent versionInfoPathGUI = new GUIContent( "VersionInfo path: ", "Path of the VersionInfo.info file on your computer" );
+		private readonly GUIContent downloadLinksPathGUI = new GUIContent( "Download links holder: ", "Path of the download links holder file on your computer" );
+		private readonly GUIContent xmlPathGUI = new GUIContent( "XML file: ", "Path of the xml file to sign" );
+		private readonly GUIContent publicKeyPathGUI = new GUIContent( "Public RSA key: ", "Path of the public RSA key" );
+		private readonly GUIContent privateKeyPathGUI = new GUIContent( "Private RSA key: ", "Path of the private RSA key" );
 
 		private int activeTab;
 		private Vector2 scrollPosition;
@@ -65,15 +78,25 @@ namespace SimplePatchToolUnity
 
 		private void DrawCreateTab()
 		{
-			c_RootPath = PathField( "Root path: ", c_RootPath, true );
-			c_PrevRoot = PathField( "Previous version path: ", c_PrevRoot, true );
-			c_OutputPath = PathField( "Output path: ", c_OutputPath, true );
+			c_RootPath = PathField( rootPathGUI, c_RootPath, true );
+			c_PrevRoot = PathField( prevRootGUI, c_PrevRoot, true );
+			c_PrevOutputPath = PathField( prevOutputPathGUI, c_PrevOutputPath, true );
+			c_OutputPath = PathField( outputPathGUI, c_OutputPath, true );
 
 			c_Name = EditorGUILayout.TextField( "Project name: ", c_Name );
 			c_Version = EditorGUILayout.TextField( "Project version: ", c_Version );
 
 			c_CreateRepair = EditorGUILayout.Toggle( "Create repair patch: ", c_CreateRepair );
 			c_CreateInstaller = EditorGUILayout.Toggle( "Create installer patch: ", c_CreateInstaller );
+
+			GUI.enabled = false;
+			EditorGUILayout.Toggle( createIncrementalGUI, !string.IsNullOrEmpty( c_PrevRoot ) );
+
+			if( !string.IsNullOrEmpty( c_PrevOutputPath ) )
+				GUI.enabled = true;
+
+			c_SkipUnchangedPatchFiles = EditorGUILayout.Toggle( skipUnchangedPatchFilesGUI, c_SkipUnchangedPatchFiles );
+			GUI.enabled = true;
 
 			c_RepairComp = (CompressionFormat) EditorGUILayout.EnumPopup( "Repair patch compression: ", c_RepairComp );
 			c_IncrementalComp = (CompressionFormat) EditorGUILayout.EnumPopup( "Incremental patch compression: ", c_IncrementalComp );
@@ -88,6 +111,7 @@ namespace SimplePatchToolUnity
 			{
 				c_RootPath = c_RootPath.Trim();
 				c_PrevRoot = c_PrevRoot.Trim();
+				c_PrevOutputPath = c_PrevOutputPath.Trim();
 				c_OutputPath = c_OutputPath.Trim();
 				c_IgnoredPaths = c_IgnoredPaths.Trim();
 				c_Name = c_Name.Trim();
@@ -98,10 +122,13 @@ namespace SimplePatchToolUnity
 
 				patchCreator = new PatchCreator( c_RootPath, c_OutputPath, c_Name, c_Version );
 				patchCreator.CreateIncrementalPatch( c_PrevRoot.Length > 0, c_PrevRoot ).CreateRepairPatch( c_CreateRepair ).CreateInstallerPatch( c_CreateInstaller ).
-					SetCompressionFormat( c_RepairComp, c_InstallerComp, c_IncrementalComp );
+					SetCompressionFormat( c_RepairComp, c_InstallerComp, c_IncrementalComp ).SetPreviousPatchFilesRoot( c_PrevOutputPath, c_SkipUnchangedPatchFiles );
 
 				if( c_IgnoredPaths.Length > 0 )
 					patchCreator.AddIgnoredPaths( c_IgnoredPaths.Replace( "\r", "" ).Split( '\n' ) );
+
+				if( !EditorUtility.DisplayDialog( "Self Patcher Executable", "If this is a self patching app (i.e. this app will update itself), you'll first need to generate a self patcher executable. See README for more info.", "Got it!", "Oh, I forgot it!" ) )
+					return;
 
 				if( patchCreator.Run() )
 				{
@@ -119,24 +146,31 @@ namespace SimplePatchToolUnity
 				string command = string.Format( "Patcher create -root=\"{0}\" -out=\"{1}\" -name=\"{2}\" -version=\"{3}\" -compressionRepair=\"{4}\" -compressionIncremental=\"{5}\" -compressionInstaller=\"{6}\"", c_RootPath, c_OutputPath, c_Name, c_Version, c_RepairComp, c_IncrementalComp, c_InstallerComp );
 				if( c_PrevRoot.Length > 0 )
 					command += string.Concat( " -prevRoot=\"", c_PrevRoot, "\"" );
+				if( c_PrevOutputPath.Length > 0 )
+					command += string.Concat( " -prevPatchRoot=\"", c_PrevOutputPath, "\"" );
 				if( c_IgnoredPaths.Length > 0 )
 					command += string.Concat( " -ignoredPaths=\"", CONSOLE_COMMAND_IGNORED_PATHS_HOLDER, "\"" );
 				if( !c_CreateRepair )
 					command += " -dontCreateRepairPatch";
 				if( !c_CreateInstaller )
 					command += " -dontCreateInstallerPatch";
+				if( c_SkipUnchangedPatchFiles )
+					command += " -skipUnchangedPatchFiles";
 
 				Debug.Log( command );
 
 				if( c_IgnoredPaths.Length > 0 )
 					Debug.Log( string.Concat( "You have to insert the following ignored path(s) to \"", CONSOLE_COMMAND_IGNORED_PATHS_HOLDER, "\":\n", c_IgnoredPaths ) );
 			}
+
+			if( GUILayout.Button( "Help", GUILayout.Height( 25f ) ) )
+				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Legacy:-Generating-Patch#via-unity-plugin" );
 		}
 
 		private void DrawUpdateTab()
 		{
-			u_versionInfoPath = PathField( "VersionInfo path: ", u_versionInfoPath, false );
-			u_downloadLinksPath = PathField( "Download links holder: ", u_downloadLinksPath, false );
+			u_versionInfoPath = PathField( versionInfoPathGUI, u_versionInfoPath, false );
+			u_downloadLinksPath = PathField( downloadLinksPathGUI, u_downloadLinksPath, false );
 
 			GUILayout.Label( "Or, paste download links here (one link per line): " );
 			u_downloadLinksContents = EditorGUILayout.TextArea( u_downloadLinksContents );
@@ -179,13 +213,16 @@ namespace SimplePatchToolUnity
 
 				Debug.Log( "Result: " + updateSuccessful );
 			}
+
+			if( GUILayout.Button( "Help", GUILayout.Height( 25f ) ) )
+				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Legacy:-Updating-Download-Links" );
 		}
 
 		private void DrawSecurityTab()
 		{
-			s_xmlPath = PathField( "XML file: ", s_xmlPath, false );
-			s_publicKeyPath = PathField( "Public RSA key: ", s_publicKeyPath, false );
-			s_PrivateKeyPath = PathField( "Private RSA key: ", s_PrivateKeyPath, false );
+			s_xmlPath = PathField( xmlPathGUI, s_xmlPath, false );
+			s_publicKeyPath = PathField( publicKeyPathGUI, s_publicKeyPath, false );
+			s_PrivateKeyPath = PathField( privateKeyPathGUI, s_PrivateKeyPath, false );
 
 			if( GUILayout.Button( "Sign XML", GUILayout.Height( 35f ) ) )
 			{
@@ -227,6 +264,9 @@ namespace SimplePatchToolUnity
 
 				AssetDatabase.Refresh();
 			}
+
+			if( GUILayout.Button( "Help", GUILayout.Height( 25f ) ) )
+				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches#built-in-method" );
 		}
 
 		private void OnUpdate()
@@ -256,7 +296,7 @@ namespace SimplePatchToolUnity
 			}
 		}
 
-		private string PathField( string label, string path, bool isDirectory )
+		private string PathField( GUIContent label, string path, bool isDirectory )
 		{
 			GUILayout.BeginHorizontal();
 			path = EditorGUILayout.TextField( label, path );

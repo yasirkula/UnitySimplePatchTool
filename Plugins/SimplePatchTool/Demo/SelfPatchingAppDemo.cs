@@ -3,7 +3,6 @@ using SimplePatchToolCore;
 using SimplePatchToolSecurity;
 using System.Collections;
 using System.IO;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #endif
 using UnityEngine;

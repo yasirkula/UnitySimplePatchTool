@@ -67,6 +67,8 @@ namespace SimplePatchToolUnity
 				EditorApplication.update += OnUpdate;
 
 				CheckProjectExists();
+
+				EditorUtility.DisplayDialog( "Self Patcher Executable", "If this is a self patching app (i.e. this app will update itself), you'll need to generate a self patcher executable. See README for more info.", "Got it!" );
 			}
 
 			GUI.enabled = ( project == null || !project.IsRunning ) && projectExists.HasValue && projectExists.Value;
@@ -127,7 +129,7 @@ namespace SimplePatchToolUnity
 			DrawHorizontalLine();
 
 			if( GUILayout.Button( "Help", GUILayout.Height( 25 ) ) )
-				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki" );
+				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended" );
 
 			if( GUILayout.Button( "Open Legacy Window", GUILayout.Height( 25 ) ) )
 				PatcherEditorLegacy.Initialize();

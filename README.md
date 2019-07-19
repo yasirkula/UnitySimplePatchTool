@@ -4,7 +4,7 @@
 
 **Forum Thread:** https://forum.unity.com/threads/simplepatchtool-open-source-patching-solution-for-standalone-platforms.542465/
 
-This plugin is a Unity port of [SimplePatchTool](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications. Before using this plugin, you are recommended to first see SimplePatchTool's documentation: https://github.com/yasirkula/SimplePatchTool
+This plugin is a Unity port of [SimplePatchTool](https://github.com/yasirkula/SimplePatchTool), a general-purpose patcher library for **standalone** applications.
 
 ## LICENSE
 
@@ -14,18 +14,22 @@ SimplePatchTool is licensed under the [MIT License](LICENSE); however, it uses e
 - Octodiff - [Apache License, Version 2.0](https://github.com/OctopusDeploy/Octodiff/blob/master/LICENSE.txt)
 - SharpZipLib - [MIT License](https://github.com/icsharpcode/SharpZipLib/blob/master/LICENSE.txt)
 
-## HOW TO
+## SETUP
 
 - import **SimplePatchTool.unitypackage** to your project
-- in **Edit-Project Settings-Player**, change **Api Compatibility Level** to **.NET 2.0** or higher (i.e. don't use *.NET 2.0 Subset*)
+- in **Edit-Project Settings-Player**, change **Api Compatibility Level** to **.NET 2.0** or higher (i.e. don't use *.NET 2.0 Subset* or *.NET Standard 2.0*)
 - *(optional)* in **Edit-Project Settings-Player**, enable **Run In Background** so that SimplePatchTool can continue running while the application is minimized/not focused
-- you can now use **Window-Simple Patch Tool** to [create projects, generate patches and so on](https://github.com/yasirkula/SimplePatchTool/wiki):
+
+## USAGE
+
+1. [integrate SimplePatchTool to your project](https://github.com/yasirkula/SimplePatchTool/wiki/Integrating-SimplePatchTool) (you can also use the [PatcherWrapper](#patcherwrapper-component) component for simple integrations)
+2. use **Window-Simple Patch Tool** to [create your first patch and push it to the server of your choice](https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches)
+3. whenever you update the app, create another patch and push it to the server
+4. each time you push a new patch to the server, your clients will automatically fetch it and keep themselves up-to-date
+
+Or, for starters, you can inspect the [example scenes](#examples) first.
 
 ![editor_window](Images/editor-window.png)
-
-### Updating Dll's
-
-This plugin uses SimplePatchTool's **SimplePatchToolCore** and **SimplePatchToolSecurity** modules without any modifications; so, if you want, you can make any changes to [these modules](https://github.com/yasirkula/SimplePatchTool), rebuild them and replace the dll files at *Plugins/SimplePatchTool/DLL* with the updated ones.
 
 ### Unity-specific Changes
 
@@ -42,13 +46,41 @@ SimplePatchTool patcher = new SimplePatchTool( ... )
 
 Alternatively, you can call the [SPTUtils.CreatePatcher( string rootPath, string versionInfoURL )](Plugins/SimplePatchTool/Scripts/SPTUtils.cs) function which returns a Unity-compatible *SimplePatchTool* instance.
 
+To check for updates/apply a patch and wait for the operation to finish in a coroutine, you can use the following *SimplePatchTool* extension functions: `CheckForUpdatesCoroutine` and `RunCoroutine`.
+
+### PatcherWrapper Component
+
+For simple patcher integrations, you can use the **Patcher Wrapper** component to quickly create a customizable patcher with a number of properties and events. Most of these customization options have tooltips or explanatory texts to help you understand what is what. PatcherWrapper also has the following functions and properties:
+
+`string RootPath { get; }`: calculated root path of the application
+
+`string ExecutablePath { get; }`: calculated path of the application's executable
+
+`SimplePatchTool Patcher { get; }`: the *SimplePatchTool* instance this component is using to check for updates/apply patches. You should not call *SetListener* on this instance since it would prevent PatcherWrapper's events from working
+
+`void CheckForUpdates()`: starts checking for updates
+
+`void ApplyPatch()`: starts updating the application
+
+`void RunSelfPatcherExecutable()`: if this is a self patching app, starts the self patcher executable to finalize the update. This should only be called if the patcher reports a successful patch (i.e. the *Patch Successful* event is an ideal place to call this function)
+
+`void LaunchApp()`: launches the app (i.e. starts the app located at *ExecutablePath*). Can be useful for launchers launching the main app
+
+`void Cancel()`: cancels the currently running operation
+
+### Updating Dll's
+
+This plugin uses SimplePatchTool's **SimplePatchToolCore** and **SimplePatchToolSecurity** modules without any modifications; so, if you want, you can make any changes to [these modules](https://github.com/yasirkula/SimplePatchTool), rebuild them and replace the dll files at *Plugins/SimplePatchTool/DLL* with the updated ones.
+
 ## EXAMPLES
+
+**NOTE:** it is recommended that you take a look at the [Glossary](https://github.com/yasirkula/SimplePatchTool/wiki/Glossary) first.
 
 Some of the example scenes use the [PatcherUI](Plugins/SimplePatchTool/Demo/PatcherUI.cs) prefab to show *SimplePatchTool*'s progress to the user; feel free to use it in your own projects, as well:
 
 ![patcher_ui](Images/patcher-ui.png)
 
-If you [sign your *VersionInfo* and/or *PatchInfo* files with private RSA key(s)](https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches), you can paste their corresponding public RSA key(s) to the **Version Info RSA** and/or **Patch Info RSA** variables in the demo scenes.
+If you plan to [sign your *VersionInfo* and/or *PatchInfo* files with private RSA key(s) for increased protection against man-in-the-middle attacks](https://github.com/yasirkula/SimplePatchTool/wiki/Signing-&-Verifying-Patches), you can paste your public RSA key(s)' contents to the **Version Info RSA** and/or **Patch Info RSA** variables in the demo scenes.
 
 ### [PatcherControlPanelDemo](Plugins/SimplePatchTool/Demo/PatcherControlPanelDemo.cs)
 

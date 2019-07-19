@@ -31,5 +31,41 @@ namespace SimplePatchToolUnity
 				OnUpdate();
 		}
 	}
+
+	public static class SPTExtensions
+	{
+		public class PatcherWaitForFinishHandle : CustomYieldInstruction
+		{
+			private readonly SimplePatchTool patcher;
+			public override bool keepWaiting { get { return patcher.IsRunning; } }
+
+			public PatcherWaitForFinishHandle( SimplePatchTool patcher )
+			{
+				this.patcher = patcher;
+			}
+		}
+
+		public static PatcherWaitForFinishHandle CheckForUpdatesCoroutine( this SimplePatchTool patcher, bool checkVersionOnly = true )
+		{
+			if( patcher == null )
+				return null;
+
+			if( !patcher.IsRunning && !patcher.CheckForUpdates( checkVersionOnly ) )
+				return null;
+
+			return new PatcherWaitForFinishHandle( patcher );
+		}
+
+		public static PatcherWaitForFinishHandle RunCoroutine( this SimplePatchTool patcher, bool selfPatching )
+		{
+			if( patcher == null )
+				return null;
+
+			if( !patcher.IsRunning && !patcher.Run( selfPatching ) )
+				return null;
+
+			return new PatcherWaitForFinishHandle( patcher );
+		}
+	}
 }
 #endif
