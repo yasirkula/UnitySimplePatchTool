@@ -128,9 +128,13 @@ namespace SimplePatchToolUnity
 				DisposeStream();
 			}
 
+#if UNITY_2019_1_OR_NEWER
+			protected override void ReceiveContentLengthHeader( ulong contentLength )
+#else
 			protected override void ReceiveContentLength( int contentLength )
+#endif
 			{
-				expected = contentLength;
+				expected = (long) contentLength;
 			}
 
 			public void Cancel()
