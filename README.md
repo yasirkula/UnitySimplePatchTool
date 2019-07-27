@@ -1,6 +1,6 @@
 # Simple Patch Tool for Unity
 
-**Available on Asset Store:** https://www.assetstore.unity3d.com/en/#!/content/124296
+**Available on Asset Store:** https://assetstore.unity.com/packages/tools/network/simple-patch-tool-124296
 
 **Forum Thread:** https://forum.unity.com/threads/simplepatchtool-open-source-patching-solution-for-standalone-platforms.542465/
 
