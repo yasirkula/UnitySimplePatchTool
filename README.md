@@ -90,8 +90,6 @@ This scene lets you tweak some variables at runtime to quickly test some patches
 
 ### [SelfPatchingAppDemo](Plugins/SimplePatchTool/Demo/SelfPatchingAppDemo.cs)
 
-~~**Video tutorial:** https://www.youtube.com/watch?v=Gjl6my7rVSI~~ (legacy tutorial)
-
 This scene allows you to quickly create and test a self patching app. It can't run on the Editor.
 
 You can test this scene as follows:
@@ -113,8 +111,6 @@ You can test this scene as follows:
 ### [LauncherDemo](Plugins/SimplePatchTool/Demo/LauncherDemo.cs)
 
 ![launcher_ui](Images/launcher-demo.png)
-
-~~**Video tutorial:** https://www.youtube.com/watch?v=P7iUQ-n3EQA~~ (legacy tutorial)
 
 This scene allows you to quickly create and test a launcher that can self patch itself in addition to patching and launching a main app. Launcher first checks if it is up-to-date (if not, self patches itself) and then checks if the main app is up-to-date (if not, patches it). If you don't provide a VersionInfo url for one of these patches, that patch will be skipped. This scene can't run on the Editor.
 
