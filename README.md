@@ -1,6 +1,6 @@
 # Simple Patch Tool for Unity
 
-**Available on Asset Store:** https://www.assetstore.unity3d.com/en/#!/content/124296
+**Available on Asset Store:** https://assetstore.unity.com/packages/tools/network/simple-patch-tool-124296
 
 **Forum Thread:** https://forum.unity.com/threads/simplepatchtool-open-source-patching-solution-for-standalone-platforms.542465/
 
@@ -16,7 +16,7 @@ SimplePatchTool is licensed under the [MIT License](LICENSE); however, it uses e
 
 ## SETUP
 
-- import **SimplePatchTool.unitypackage** to your project
+- import [SimplePatchTool.unitypackage](https://github.com/yasirkula/UnitySimplePatchTool/releases) to your project
 - in **Edit-Project Settings-Player**, change **Api Compatibility Level** to **.NET 2.0** or higher (i.e. don't use *.NET 2.0 Subset* or *.NET Standard 2.0*)
 - *(optional)* in **Edit-Project Settings-Player**, enable **Run In Background** so that SimplePatchTool can continue running while the application is minimized/not focused
 
