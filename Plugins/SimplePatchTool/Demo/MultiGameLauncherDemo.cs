@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#multigamelauncherdemo" )]
 	public class MultiGameLauncherDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
@@ -64,7 +64,7 @@ namespace SimplePatchToolUnity
 		private string launcherVersionInfoURL;
 
 		[SerializeField]
-		[Tooltip( "Name of the self patcher executable" )]
+		[Tooltip( "Name of the self patcher's executable" )]
 		private string selfPatcherExecutable = "SelfPatcher.exe";
 
 		[SerializeField]
@@ -82,12 +82,12 @@ namespace SimplePatchToolUnity
 		[Header( "XML Verifier Keys (Optional)" )]
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo.info" )]
 		private string versionInfoRSA;
 
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo.info" )]
 		private string patchInfoRSA;
 
 		[Header( "Other Variables" )]
@@ -151,8 +151,22 @@ namespace SimplePatchToolUnity
 
 		private MultiGameLauncherGameHolder[] gameHolders;
 
+#if UNITY_EDITOR
+		private readonly bool isEditor = true;
+#else
+		private readonly bool isEditor = false;
+#endif
+
 		private void Awake()
 		{
+			if( isEditor )
+			{
+				Debug.LogWarning( "Can't test the launcher on Editor!" );
+				Destroy( this );
+
+				return;
+			}
+
 			launcherVersionInfoURL = launcherVersionInfoURL.Trim();
 			patchNotesURL = patchNotesURL.Trim();
 			forumURL = forumURL.Trim();
@@ -199,9 +213,7 @@ namespace SimplePatchToolUnity
 				StartCoroutine( FetchPatchNotes() );
 
 			// Can't test the launcher on Editor
-#if !UNITY_EDITOR
 			StartLauncherPatch();
-#endif
 		}
 
 		private void PlayButtonClicked( MultiGameLauncherGameHolder gameHolder )
@@ -215,12 +227,7 @@ namespace SimplePatchToolUnity
 
 		private void PatchButtonClicked( MultiGameLauncherGameHolder gameHolder )
 		{
-#if UNITY_EDITOR
-			Debug.LogWarning( "Can't test the launcher on Editor!" );
-			return;
-#else
 			ExecutePatch( gameHolder );
-#endif
 		}
 
 		private void ForumButtonClicked()

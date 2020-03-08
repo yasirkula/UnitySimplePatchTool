@@ -12,22 +12,25 @@ SimplePatchTool is a C# library for patching standalone applications with binary
 
 3. USAGE
 - integrate SimplePatchTool to your project: https://github.com/yasirkula/SimplePatchTool/wiki/Integrating-SimplePatchTool (you can also use the PatcherWrapper component for simple integrations)
+- build the project
 - use Window-Simple Patch Tool to create your first patch and push it to the server of your choice: https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches
 - whenever you update the app, create another patch and push it to the server
 - each time you push a new patch to the server, your clients will automatically fetch it and keep themselves up-to-date
 
-Or, for starters, you can inspect the [example scenes](#examples) first: https://github.com/yasirkula/UnitySimplePatchTool#examples
+For starters, you can inspect the example scenes: https://github.com/yasirkula/UnitySimplePatchTool#examples
 
-4. SELF PATCHER EXECUTABLE
-Self patching applications (apps that update themselves) need a companion app called self patcher executable to be able to patch themselves because it is not possible patch an application that is already running. Instead, application will apply the patch files to cache directory and then launch the self patcher executable while also closing itself so that self patcher executable can update the app's files using the files in the cache.
+4. SELF PATCHER
+Self patching applications (apps that update themselves) need a companion app called self patcher to be able to patch themselves because apps can't patch themselves in conventional ways while they are still running. Instead, application will apply the patch files to cache directory and then launch the self patcher while also closing itself so that the self patcher can update the app's files using the files in the cache.
 
-To create a self patcher executable, see: https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Self-Patcher-Executable
+To create a self patcher, see: https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Self-Patcher-Executable
 
-- if you are creating patches via the new SimplePatchTool-projects (ProjectManager)(recommended): move the self patcher executable's files to your project's SelfPatcher directory
-- if you are creating patches via Legacy method: after building your Unity project, create a subdirectory called SPPatcher inside your build directory and move the self patcher executable's files there. Note that you must repeat this step for each new build of your project
+- if you are creating patches via ProjectManager (Window-Simple Patch Tool)(recommended): move the self patcher's files to the SimplePatchTool-project's SelfPatcher directory
+- if you are creating patches via Legacy method (Window-Simple Patch Tool-Open Legacy Window): after building your Unity project, create a subdirectory called SPPatcher inside your build directory and move the self patcher's files there. Note that you must repeat this step for each new build of your project
 
 5. PatcherWrapper COMPONENT
-For simple patcher integrations, you can use the Patcher Wrapper component to quickly create a customizable patcher with a number of properties and events. Most of these customization options have tooltips or explanatory texts to help you understand what is what. PatcherWrapper also has the following functions and properties:
+For simple patcher integrations, you can use the Patcher Wrapper component to quickly create a customizable patcher with a number of properties and events. Most of these customization options have tooltips or explanatory texts to help you understand what is what. To fill the "Version Info URL" field, see https://github.com/yasirkula/SimplePatchTool/wiki/Generating-versionInfoURL.
+
+PatcherWrapper has the following properties and functions:
 
 string RootPath { get; }: calculated root path of the application
 string ExecutablePath { get; }: calculated path of the application's executable

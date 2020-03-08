@@ -320,6 +320,7 @@ GameObject:
   - component: {fileID: 4232169956780676}
   - component: {fileID: 114775860479319828}
   - component: {fileID: 114005093399266698}
+  - component: {fileID: 114910840848650198}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -888,6 +889,17 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Slider+SliderEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
+--- !u!114 &114910840848650198
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1877403372044416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1327945023, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!222 &222066668790139806
 CanvasRenderer:
   m_ObjectHideFlags: 1

@@ -1,87 +1,17 @@
 ﻿#if UNITY_EDITOR || UNITY_STANDALONE
+using SimplePatchToolCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 using UnityEngine.Networking;
-using SimplePatchToolCore;
 
 namespace SimplePatchToolUnity
 {
 	public class CookieAwareWebClient : IDownloadHandler
 	{
 		#region Helper Classes
-		private class WebOp : IDisposable
-		{
-			public enum OpType { DownloadString, DownloadFile }
-
-			private UnityWebRequest webRequest;
-
-			public readonly string url;
-			public readonly OpType op;
-			public readonly object userState;
-			public readonly object additionalData;
-
-			public bool CanStart { get { return webRequest == null || webRequest.isModifiable; } }
-			public bool Cancelled { get; private set; }
-
-			public WebOp( string url, OpType op, object userState )
-			{
-				this.url = url;
-				this.op = op;
-				this.userState = userState;
-				this.additionalData = null;
-			}
-
-			public WebOp( string url, OpType op, object userState, object additionalData )
-			{
-				this.url = url;
-				this.op = op;
-				this.userState = userState;
-				this.additionalData = additionalData;
-			}
-
-			public UnityWebRequest CreateWebRequest( CookieContainer cookies )
-			{
-				if( op == OpType.DownloadString )
-					webRequest = UnityWebRequest.Get( url );
-				else
-				{
-					webRequest = new UnityWebRequest( url, UnityWebRequest.kHttpVerbGET, new ToFileDownloadHandler( new byte[64 * 1024], (string) additionalData ), null );
-
-					string cookie = cookies[url];
-					if( cookie != null )
-						webRequest.SetRequestHeader( "cookie", cookie );
-				}
-
-				return webRequest;
-			}
-
-			public void Dispose()
-			{
-				if( webRequest != null )
-				{
-					ToFileDownloadHandler fileDownloadHandler = webRequest.downloadHandler as ToFileDownloadHandler;
-					if( fileDownloadHandler != null )
-						fileDownloadHandler.DisposeStream();
-
-					webRequest.Dispose();
-					webRequest = null;
-				}
-			}
-
-			public void Cancel()
-			{
-				Cancelled = true;
-
-				ToFileDownloadHandler fileDownloadHandler = webRequest.downloadHandler as ToFileDownloadHandler;
-				if( fileDownloadHandler != null )
-					fileDownloadHandler.Cancel();
-
-				webRequest.Abort();
-			}
-		}
-
 		// Credit: https://robots.thoughtbot.com/avoiding-out-of-memory-crashes-on-mobile
 		private class ToFileDownloadHandler : DownloadHandlerScript
 		{
@@ -144,10 +74,17 @@ namespace SimplePatchToolUnity
 
 			public void DisposeStream()
 			{
-				if( fileStream != null )
+				try
 				{
-					fileStream.Dispose();
-					fileStream = null;
+					if( fileStream != null )
+					{
+						fileStream.Dispose();
+						fileStream = null;
+					}
+				}
+				catch( Exception e )
+				{
+					Debug.LogException( e );
 				}
 			}
 		}
@@ -185,186 +122,182 @@ namespace SimplePatchToolUnity
 		public long DownloadedFileSize { get; set; }
 		public DownloadProgress Progress { get; set; }
 
-		private readonly object syncObj;
-		private WebOp webOp;
+		private UnityWebRequest webRequest;
+		private bool downloadCancelled;
 
-		private readonly CookieContainer cookies;
+		private string pendingDownloadUrl;
+		private string pendingDownloadPath;
+		private object pendingUserState;
 
-		public CookieAwareWebClient()
-		{
-			syncObj = new object();
-			cookies = new CookieContainer();
-
-			SPTUtils.Instance.OnUpdate += OnUpdate;
-		}
-
-		~CookieAwareWebClient()
-		{
-			SPTUtils.Instance.OnUpdate -= OnUpdate;
-		}
+		private readonly CookieContainer cookies = new CookieContainer();
 
 		public void DownloadString( string url, object userState )
 		{
-			webOp = new WebOp( url, WebOp.OpType.DownloadString, userState );
+			pendingDownloadUrl = url;
+			pendingDownloadPath = null;
+			pendingUserState = userState;
+
+			webRequest = null;
+			downloadCancelled = false;
+
+			SPTUtils.Instance.OnUpdate -= StartDownload;
+			SPTUtils.Instance.OnUpdate += StartDownload;
 		}
 
 		public void DownloadFile( string url, string path, object userState )
 		{
-			webOp = new WebOp( url, WebOp.OpType.DownloadFile, userState, path );
+			pendingDownloadUrl = url;
+			pendingDownloadPath = path;
+			pendingUserState = userState;
+
+			webRequest = null;
+			downloadCancelled = false;
+
+			SPTUtils.Instance.OnUpdate -= StartDownload;
+			SPTUtils.Instance.OnUpdate += StartDownload;
 		}
 
-		private IEnumerator DownloadString()
+		private void StartDownload()
 		{
-			WebOp _webOp = webOp;
-			try
-			{
-				Exception error = null;
-				UnityWebRequest webRequest = null;
+			SPTUtils.Instance.OnUpdate -= StartDownload;
 
-				try
-				{
-					webRequest = webOp.CreateWebRequest( cookies );
-				}
-				catch( Exception e )
-				{
-					error = e;
-					webRequest = null;
-				}
-
-				if( webRequest != null )
-#if UNITY_2017_2_OR_NEWER
-					yield return webRequest.SendWebRequest();
-#else
-					yield return webRequest.Send();
-#endif
-
-				lock( syncObj )
-				{
-					webOp = null;
-				}
-
-				if( OnDownloadStringComplete != null )
-				{
-					if( error == null )
-					{
-#if UNITY_2017_1_OR_NEWER
-						bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
-#else
-						bool webRequestError = webRequest.isError;
-#endif
-
-						bool cancelled = _webOp.Cancelled && webRequestError;
-						error = webRequestError ? new Exception( webRequest.error ) : null;
-						string result = webRequestError ? null : webRequest.downloadHandler.text;
-
-						OnDownloadStringComplete( cancelled, error, result, _webOp.userState );
-					}
-					else
-						OnDownloadStringComplete( false, error, null, _webOp.userState );
-				}
-			}
-			finally
-			{
-				if( _webOp != null )
-					_webOp.Dispose();
-			}
-		}
-
-		private IEnumerator DownloadFile()
-		{
-			WebOp _webOp = webOp;
-			try
-			{
-				Exception error = null;
-				UnityWebRequest webRequest = null;
-
-				try
-				{
-					webRequest = webOp.CreateWebRequest( cookies );
-#if UNITY_2017_2_OR_NEWER
-					webRequest.SendWebRequest();
-#else
-					webRequest.Send();
-#endif
-				}
-				catch( Exception e )
-				{
-					error = e;
-					webRequest = null;
-				}
-
-				if( webRequest != null )
-				{
-					while( !webRequest.isDone )
-					{
-						if( OnDownloadFileProgressChange != null )
-							OnDownloadFileProgressChange( (long) webRequest.downloadedBytes, ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength );
-
-						yield return null;
-					}
-				}
-
-				lock( syncObj )
-				{
-					webOp = null;
-				}
-
-				if( error == null )
-				{
-#if UNITY_2017_1_OR_NEWER
-					bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
-#else
-					bool webRequestError = webRequest.isError;
-#endif
-
-					bool cancelled = _webOp.Cancelled && webRequestError;
-					if( !cancelled )
-					{
-						if( OnDownloadFileProgressChange != null )
-						{
-							long contentLength = ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength;
-							OnDownloadFileProgressChange( contentLength, contentLength );
-						}
-					}
-
-					string cookie = webRequest.GetResponseHeader( "set-cookie" );
-					if( cookie != null && cookie.Length > 0 )
-						cookies[webRequest.url] = cookie;
-
-					if( OnDownloadFileComplete != null )
-					{
-						error = webRequestError ? new Exception( webRequest.error ) : null;
-						OnDownloadFileComplete( cancelled, error, _webOp.userState );
-					}
-				}
-				else if( OnDownloadFileComplete != null )
-					OnDownloadFileComplete( false, error, _webOp.userState );
-			}
-			finally
-			{
-				if( _webOp != null )
-					_webOp.Dispose();
-			}
+			if( pendingDownloadPath != null )
+				SPTUtils.Instance.StartCoroutine( DownloadFileCoroutine() );
+			else
+				SPTUtils.Instance.StartCoroutine( DownloadStringCoroutine() );
 		}
 
 		public void Cancel()
 		{
-			lock( syncObj )
+			if( !downloadCancelled && webRequest != null && !webRequest.isDone )
 			{
-				if( webOp != null )
-					webOp.Cancel();
+				downloadCancelled = true;
+				webRequest.Abort();
 			}
 		}
 
-		private void OnUpdate()
+		private IEnumerator DownloadStringCoroutine()
 		{
-			if( webOp != null && webOp.CanStart )
+			try
 			{
-				if( webOp.op == WebOp.OpType.DownloadString )
-					SPTUtils.Instance.StartCoroutine( DownloadString() );
-				else
-					SPTUtils.Instance.StartCoroutine( DownloadFile() );
+				webRequest = UnityWebRequest.Get( pendingDownloadUrl );
 			}
+			catch( Exception e )
+			{
+				if( OnDownloadFileComplete != null )
+					OnDownloadFileComplete( false, e, pendingUserState );
+
+				yield break;
+			}
+
+#if UNITY_2017_2_OR_NEWER
+			yield return webRequest.SendWebRequest();
+#else
+			yield return webRequest.Send();
+#endif
+
+			if( OnDownloadStringComplete != null )
+			{
+#if UNITY_2017_1_OR_NEWER
+				bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
+#else
+				bool webRequestError = webRequest.isError;
+#endif
+
+				bool cancelled = downloadCancelled && webRequestError;
+				Exception error = webRequestError ? new Exception( webRequest.error ) : null;
+				string result = webRequestError ? null : webRequest.downloadHandler.text;
+
+				OnDownloadStringComplete( cancelled, error, result, pendingUserState );
+			}
+
+			webRequest.Dispose();
+			webRequest = null;
+		}
+
+		private IEnumerator DownloadFileCoroutine()
+		{
+			ToFileDownloadHandler downloadHandler;
+			try
+			{
+				downloadHandler = new ToFileDownloadHandler( new byte[64 * 1024], pendingDownloadPath );
+			}
+			catch( Exception e )
+			{
+				if( OnDownloadFileComplete != null )
+					OnDownloadFileComplete( false, e, pendingUserState );
+
+				yield break;
+			}
+
+			try
+			{
+				webRequest = new UnityWebRequest( pendingDownloadUrl, UnityWebRequest.kHttpVerbGET, downloadHandler, null );
+
+				string sentCookie = cookies[pendingDownloadUrl];
+				if( sentCookie != null )
+					webRequest.SetRequestHeader( "cookie", sentCookie );
+
+#if UNITY_2017_2_OR_NEWER
+				webRequest.SendWebRequest();
+#else
+				webRequest.Send();
+#endif
+			}
+			catch( Exception e )
+			{
+				downloadHandler.DisposeStream();
+
+				if( webRequest != null )
+				{
+					webRequest.Dispose();
+					webRequest = null;
+				}
+
+				if( OnDownloadFileComplete != null )
+					OnDownloadFileComplete( false, e, pendingUserState );
+
+				yield break;
+			}
+
+			while( !webRequest.isDone )
+			{
+				if( OnDownloadFileProgressChange != null )
+					OnDownloadFileProgressChange( (long) webRequest.downloadedBytes, ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength );
+
+				yield return null;
+			}
+
+			downloadHandler.DisposeStream();
+
+#if UNITY_2017_1_OR_NEWER
+			bool webRequestError = webRequest.isHttpError || webRequest.isNetworkError;
+#else
+			bool webRequestError = webRequest.isError;
+#endif
+
+			bool cancelled = downloadCancelled && webRequestError;
+			if( !cancelled )
+			{
+				if( OnDownloadFileProgressChange != null )
+				{
+					long contentLength = ( (ToFileDownloadHandler) webRequest.downloadHandler ).ContentLength;
+					OnDownloadFileProgressChange( contentLength, contentLength );
+				}
+			}
+
+			string receivedCookie = webRequest.GetResponseHeader( "set-cookie" );
+			if( !string.IsNullOrEmpty( receivedCookie ) )
+				cookies[webRequest.url] = receivedCookie;
+
+			if( OnDownloadFileComplete != null )
+			{
+				Exception error = webRequestError ? new Exception( webRequest.error ) : null;
+				OnDownloadFileComplete( cancelled, error, pendingUserState );
+			}
+
+			webRequest.Dispose();
+			webRequest = null;
 		}
 	}
 }

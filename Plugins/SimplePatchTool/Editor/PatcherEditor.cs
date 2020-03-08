@@ -57,18 +57,16 @@ namespace SimplePatchToolUnity
 				project = new ProjectManager( projectRootPath );
 				project.CreateProject();
 
-				ProjectInfo projectInfo = PatchUtils.GetProjectInfoFromPath( project.projectInfoPath );
+				ProjectInfo projectInfo = project.LoadProjectInfo();
 				projectInfo.IgnoredPaths.Add( "*output_log.txt" );
-				PatchUtils.SerializeProjectInfoToXML( projectInfo, project.projectInfoPath );
-
-				SecurityUtils.CreateRSAKeyPairInDirectory( project.utilitiesPath );
+				project.SaveProjectInfo( projectInfo );
 
 				EditorApplication.update -= OnUpdate;
 				EditorApplication.update += OnUpdate;
 
 				CheckProjectExists();
 
-				EditorUtility.DisplayDialog( "Self Patcher Executable", "If this is a self patching app (i.e. this app will update itself), you'll need to generate a self patcher executable. See README for more info.", "Got it!" );
+				EditorUtility.DisplayDialog( "Self Patcher", "If this is a self patching app (i.e. this app will update itself), you'll need to generate a self patcher. See README for more info.", "Got it!" );
 			}
 
 			GUI.enabled = ( project == null || !project.IsRunning ) && projectExists.HasValue && projectExists.Value;

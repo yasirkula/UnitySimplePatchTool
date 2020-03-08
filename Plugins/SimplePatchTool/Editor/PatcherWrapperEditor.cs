@@ -68,7 +68,7 @@ namespace SimplePatchToolUnity
 			EditorGUILayout.LabelField( "Patcher outputted a log <i>(string: log)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( logReceived );
 
-			EditorGUILayout.LabelField( "Percentage [0-100] of the currently running operation (e.g. downloading a single file) has changed <i>(float: percentage)</i>", HelpLabelStyle );
+			EditorGUILayout.LabelField( "Percentage [0-100] of the currently running operation (e.g. downloading a file) has changed <i>(float: percentage)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( currentProgressPercentageChanged );
 
 			EditorGUILayout.LabelField( "Overall patch percentage [0-100] has changed <i>(float: percentage)</i>", HelpLabelStyle );
@@ -86,10 +86,10 @@ namespace SimplePatchToolUnity
 			EditorGUILayout.LabelField( "Preferred patch method has changed (RepairPatch, IncrementalPatch or InstallerPatch) <i>(PatchMethod: new patch method)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( patchMethodChanged );
 
-			EditorGUILayout.LabelField( "App's current version (e.g. 1.0) is fetched <i>(string: current version)</i>", HelpLabelStyle );
+			EditorGUILayout.LabelField( "App's current version number (e.g. 1.0) is fetched <i>(string: current version number)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( currentVersionDetermined );
 
-			EditorGUILayout.LabelField( "App's newest version on the server (e.g. 1.2) is fetched <i>(string: newest version)</i>", HelpLabelStyle );
+			EditorGUILayout.LabelField( "The latest version number on the server (e.g. 1.2) is fetched <i>(string: latest version number)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( newVersionDetermined );
 
 			EditorGUILayout.LabelField( "VersionInfo is fetched from the server <i>(VersionInfo: fetched VersionInfo)</i>", HelpLabelStyle );
@@ -107,7 +107,7 @@ namespace SimplePatchToolUnity
 			EditorGUILayout.LabelField( "Failed to patch the app <i>(string: error message)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( patchFailed );
 
-			EditorGUILayout.LabelField( "Failed to start the self patcher executable <i>(string: error message)</i>", HelpLabelStyle );
+			EditorGUILayout.LabelField( "Failed to start the self patcher's executable <i>(string: error message)</i>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( selfPatchingFailed );
 
 			EditorGUILayout.LabelField( "App is up-to-date", HelpLabelStyle );
@@ -116,7 +116,7 @@ namespace SimplePatchToolUnity
 			EditorGUILayout.LabelField( "A new version is available, can start patching by calling the ApplyPatch function", HelpLabelStyle );
 			EditorGUILayout.PropertyField( updateAvailable );
 
-			EditorGUILayout.LabelField( "App patched successfully. <b>However, if this is a self patching app, then the patch must be applied to the app with the self patcher executable by calling the RunSelfPatcherExecutable function</b>", HelpLabelStyle );
+			EditorGUILayout.LabelField( "App patched successfully. <b>However, if this is a self patching app, then the patch must be applied to the app with the self patcher by calling the RunSelfPatcherExecutable function</b>", HelpLabelStyle );
 			EditorGUILayout.PropertyField( patchSuccessful );
 
 			serializedObject.ApplyModifiedProperties();

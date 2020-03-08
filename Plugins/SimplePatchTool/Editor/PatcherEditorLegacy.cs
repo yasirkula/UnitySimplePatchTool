@@ -215,7 +215,7 @@ namespace SimplePatchToolUnity
 			}
 
 			if( GUILayout.Button( "Help", GUILayout.Height( 25f ) ) )
-				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Legacy:-Updating-Download-Links" );
+				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Legacy:-Updating-Download-Links#via-unity-plugin" );
 		}
 
 		private void DrawSecurityTab()
@@ -259,8 +259,8 @@ namespace SimplePatchToolUnity
 				string publicKey, privateKey;
 				SecurityUtils.CreateRSAKeyPair( out publicKey, out privateKey );
 
-				File.WriteAllText( Path.Combine( selectedPath, "rsa_public.bytes" ), publicKey );
-				File.WriteAllText( Path.Combine( selectedPath, "rsa_private.bytes" ), privateKey );
+				File.WriteAllText( Path.Combine( selectedPath, "public.key" ), publicKey );
+				File.WriteAllText( Path.Combine( selectedPath, "private.key" ), privateKey );
 
 				AssetDatabase.Refresh();
 			}

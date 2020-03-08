@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#launcherdemo" )]
 	public class LauncherDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
@@ -26,7 +26,7 @@ namespace SimplePatchToolUnity
 		private string launcherVersionInfoURL;
 
 		[SerializeField]
-		[Tooltip( "Main app's VersionInfo URL (to patch the mainAppSubdirectory)" )]
+		[Tooltip( "Main app's VersionInfo URL (to patch Main App Subdirectory)" )]
 		private string mainAppVersionInfoURL;
 
 		[SerializeField]
@@ -34,11 +34,11 @@ namespace SimplePatchToolUnity
 		private string mainAppSubdirectory = "MainApp";
 
 		[SerializeField]
-		[Tooltip( "The file in mainAppSubdirectory that will be launched when Play is pressed" )]
+		[Tooltip( "The file in Main App Subdirectory that will be launched when Play is pressed" )]
 		private string mainAppExecutable = "MyApp.exe";
 
 		[SerializeField]
-		[Tooltip( "Name of the self patcher executable" )]
+		[Tooltip( "Name of the self patcher's executable" )]
 		private string selfPatcherExecutable = "SelfPatcher.exe";
 
 		[SerializeField]
@@ -48,12 +48,12 @@ namespace SimplePatchToolUnity
 		[Header( "XML Verifier Keys (Optional)" )]
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo.info" )]
 		private string versionInfoRSA;
 
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo.info" )]
 		private string patchInfoRSA;
 
 		[Header( "Other Variables" )]
@@ -111,8 +111,22 @@ namespace SimplePatchToolUnity
 
 		private bool isPatchingLauncher;
 
+#if UNITY_EDITOR
+		private readonly bool isEditor = true;
+#else
+		private readonly bool isEditor = false;
+#endif
+
 		private void Awake()
 		{
+			if( isEditor )
+			{
+				Debug.LogWarning( "Can't test the launcher on Editor!" );
+				Destroy( this );
+
+				return;
+			}
+
 			launcherVersionInfoURL = launcherVersionInfoURL.Trim();
 			mainAppVersionInfoURL = mainAppVersionInfoURL.Trim();
 			patchNotesURL = patchNotesURL.Trim();
@@ -182,25 +196,26 @@ namespace SimplePatchToolUnity
 				StartMainAppPatch( true );
 		}
 
+		private void OnDestroy()
+		{
+			if( patcher != null )
+			{
+				// Stop the patcher since this script can no longer control it
+				patcher.SetListener( null );
+				patcher.Cancel();
+				patcher = null;
+			}
+		}
+
 		private void PatchButtonClicked()
 		{
-#if UNITY_EDITOR
-			Debug.LogWarning( "Can't test the launcher on Editor!" );
-			return;
-#else
 			if( patcher != null && !patcher.IsRunning )
 				ExecutePatch();
-#endif
 		}
 
 		private void RepairButtonClicked()
 		{
-#if UNITY_EDITOR
-			Debug.LogWarning( "Can't test the launcher on Editor!" );
-			return;
-#else
 			StartMainAppPatch( false );
-#endif
 		}
 
 		private void PlayButtonClicked()

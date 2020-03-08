@@ -7,25 +7,25 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#patchercontrolpaneldemo" )]
 	public class PatcherControlPanelDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
 #if UNITY_EDITOR || UNITY_STANDALONE
 #pragma warning disable 0649
 		[SerializeField]
-		[Tooltip( "Name of the self patcher executable" )]
+		[Tooltip( "Name of the self patcher's executable" )]
 		private string selfPatcherExecutable = "SelfPatcher.exe";
 
 		[Header( "XML Verifier Keys (Optional)" )]
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo.info" )]
 		private string versionInfoRSA;
 
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo.info" )]
 		private string patchInfoRSA;
 
 		[Header( "Other Variables" )]

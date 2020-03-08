@@ -15,8 +15,8 @@ namespace SimplePatchToolUnity
 
 		private void RunOnMainThread()
 		{
-			SPTUtils.Instance.StartCoroutine( RefresherCoroutine() );
 			SPTUtils.Instance.OnUpdate -= RunOnMainThread;
+			SPTUtils.Instance.StartCoroutine( RefresherCoroutine() );
 		}
 
 		private IEnumerator RefresherCoroutine()

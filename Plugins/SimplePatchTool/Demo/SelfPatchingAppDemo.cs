@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#selfpatchingappdemo" )]
 	public class SelfPatchingAppDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
@@ -20,22 +20,22 @@ namespace SimplePatchToolUnity
 		private string versionInfoURL;
 
 		[SerializeField]
-		[Tooltip( "While checking for updates:\ntrue: only version number is checked (faster)\nfalse: hashes and sizes of the files are checked (verifies file integrity)" )]
+		[Tooltip( "While checking for updates:\ntrue: only version number is checked (faster)\nfalse: hashes and sizes of the files are checked (verifying integrity of files)" )]
 		private bool checkVersionOnly = true;
 
 		[SerializeField]
-		[Tooltip( "Name of the self patcher executable" )]
+		[Tooltip( "Name of the self patcher's executable" )]
 		private string selfPatcherExecutable = "SelfPatcher.exe";
 
 		[Header( "XML Verifier Keys (Optional)" )]
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo.info" )]
 		private string versionInfoRSA;
 
 		[SerializeField]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo.info" )]
 		private string patchInfoRSA;
 
 		[Header( "Other Variables" )]
@@ -56,8 +56,16 @@ namespace SimplePatchToolUnity
 		private SimplePatchTool patcher;
 		private static bool executed = false;
 
+#if UNITY_EDITOR
+		private readonly bool isEditor = true;
+#else
+		private readonly bool isEditor = false;
+#endif
+
 		private void Awake()
 		{
+			// SimplePatchTool can continue running even when the scene changes, but we don't want to run another instance
+			// of SimplePatchTool if we return to this GameObject's scene. We run SimplePatchTool only once
 			if( executed )
 			{
 				Destroy( gameObject );
@@ -67,17 +75,20 @@ namespace SimplePatchToolUnity
 			executed = true;
 			updatePanel.SetActive( false );
 
-#if UNITY_EDITOR
-			Debug.LogWarning( "Can't self patch while testing on editor" );
-			Destroy( gameObject );
-#else
+			if( isEditor )
+			{
+				Debug.LogWarning( "Can't self patch while testing on editor" );
+				Destroy( gameObject );
+
+				return;
+			}
+
 			InitializePatcher();
 
 			updateButton.onClick.AddListener( UpdateButtonClicked );
 			dismissButton.onClick.AddListener( DismissButtonClicked );
 
 			DontDestroyOnLoad( gameObject );
-#endif
 		}
 
 		private void InitializePatcher()

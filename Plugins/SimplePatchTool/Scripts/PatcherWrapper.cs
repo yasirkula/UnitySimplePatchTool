@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#patcherwrapper-component" )]
 	public class PatcherWrapper : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
@@ -33,22 +33,22 @@ namespace SimplePatchToolUnity
 		[Tooltip( "Download URL of the VersionInfo (click the Help button to learn more)" )]
 		public string VersionInfoURL;
 
-		[Tooltip( "Updated app directory (relative to root path) if it isn't the same directory that the currently running executable is located at (the root path)" )]
+		[Tooltip( "Patched directory (relative to root path), only if we aren't patching the root directory that the currently running executable resides at" )]
 		public string RelativeRootPath;
 
-		[Tooltip( "Name of this app's executable (e.g. MyApp.exe). If blank, then this value will automatically be determined by looking at the currently running executable's name. ExecutableName is used while launching the app via the LaunchApp function" )]
+		[Tooltip( "Name of this app's executable (e.g. MyApp.exe). If left blank, then this value will automatically be determined by looking at the currently running executable's name. ExecutableName is used while launching the app via the LaunchApp function" )]
 		public string ExecutableName;
 
-		[Tooltip( "While checking for updates:\ntrue: only version number is checked (faster)\nfalse: hashes and sizes of the files are checked (verifies file integrity)" )]
+		[Tooltip( "While checking for updates:\ntrue: only version number is checked (faster)\nfalse: hashes and sizes of the files are checked (verifying integrity of files)" )]
 		public bool CheckVersionOnly = true;
 
-		[Tooltip( "Is this app gonna update itself" )]
+		[Tooltip( "Is this app gonna update itself. If set to true, you'll need to generate a self patcher. See README for more info." )]
 		public bool IsSelfPatchingApp = true;
 
-		[Tooltip( "Should the app be restarted by the self patcher executable after a successful update" )]
+		[Tooltip( "Should the app be restarted by the self patcher after a successful update" )]
 		public bool RestartAppAfterSelfPatching = true;
 
-		[Tooltip( "Name of the self patcher executable (if this is a self patching app)" )]
+		[Tooltip( "Name of the self patcher's executable (if this is a self patching app)" )]
 		public string SelfPatcherExecutable = "SelfPatcher.exe";
 
 		[Tooltip( "Should repair patch be used when possible" )]
@@ -66,7 +66,7 @@ namespace SimplePatchToolUnity
 		[Tooltip( "Should the patcher abort if there are other instances of this app running" )]
 		public bool CheckForMultipleRunningInstances = true;
 
-		[Tooltip( "Should the existence and the filesizes of the files on the server be verified (not all CDNs support this)" )]
+		[Tooltip( "Should verify whether or not all patch files exist on the server before executing the patch (not all CDNs support this)" )]
 		public bool VerifyFilesOnServer = false;
 
 		[Tooltip( "Should SimplePatchTool run silently (not log anything)" )]
@@ -83,11 +83,11 @@ namespace SimplePatchToolUnity
 
 		[Header( "XML Verifier Keys (Optional)" )]
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded VersionInfo.info" )]
 		public string VersionInfoRSA;
 
 		[TextArea]
-		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo'es" )]
+		[Tooltip( "Public RSA key that will be used to verify downloaded PatchInfo.info" )]
 		public string PatchInfoRSA;
 
 		[HideInInspector] public StringEvent LogReceived;
