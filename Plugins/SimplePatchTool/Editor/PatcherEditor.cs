@@ -8,13 +8,15 @@ namespace SimplePatchToolUnity
 {
 	public class PatcherEditor : EditorWindow
 	{
+		private const string PROJECT_PATH_HOLDER = "Library/SPT_ProjectPath.txt";
+
 		private string projectRootPath;
 		private Vector2 scrollPosition;
 
 		private ProjectManager project;
 		private bool? projectExists = null;
 
-		[MenuItem( "Window/Simple Patch Tool", priority = 20 )]
+		[MenuItem( "Window/Simple Patch Tool" )]
 		private static void Initialize()
 		{
 			PatcherEditor window = GetWindow<PatcherEditor>();
@@ -26,14 +28,14 @@ namespace SimplePatchToolUnity
 
 		private void OnEnable()
 		{
-			projectRootPath = EditorPrefs.GetString( "SPT_ROOT", "" );
+			projectRootPath = File.Exists( PROJECT_PATH_HOLDER ) ? File.ReadAllText( PROJECT_PATH_HOLDER ) : "";
 			CheckProjectExists();
 		}
 
 		private void OnDisable()
 		{
 			EditorApplication.update -= OnUpdate;
-			EditorPrefs.SetString( "SPT_ROOT", projectRootPath );
+			File.WriteAllText( PROJECT_PATH_HOLDER, projectRootPath ?? "" );
 		}
 
 		private void OnGUI()
@@ -127,7 +129,7 @@ namespace SimplePatchToolUnity
 			DrawHorizontalLine();
 
 			if( GUILayout.Button( "Help", GUILayout.Height( 25 ) ) )
-				Application.OpenURL( "https://github.com/yasirkula/SimplePatchTool/wiki/Creating-Patches#a-using-projectmanager-recommended" );
+				Application.OpenURL( "https://github.com/yasirkula/UnitySimplePatchTool/wiki" );
 
 			if( GUILayout.Button( "Open Legacy Window", GUILayout.Height( 25 ) ) )
 				PatcherEditorLegacy.Initialize();

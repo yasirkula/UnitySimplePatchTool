@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#patchercontrolpaneldemo" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool/wiki/Testing-Patches" )]
 	public class PatcherControlPanelDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms

@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#launcherdemo" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool/wiki/Launcher-Tutorial" )]
 	public class LauncherDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms

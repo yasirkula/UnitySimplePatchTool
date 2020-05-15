@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#selfpatchingappdemo" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool/wiki/Self-Patching-App-Tutorial" )]
 	public class SelfPatchingAppDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms

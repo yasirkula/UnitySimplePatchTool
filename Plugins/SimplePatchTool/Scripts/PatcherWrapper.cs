@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#patcherwrapper-component" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool/wiki/Integrating-SimplePatchTool" )]
 	public class PatcherWrapper : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
@@ -42,7 +42,7 @@ namespace SimplePatchToolUnity
 		[Tooltip( "While checking for updates:\ntrue: only version number is checked (faster)\nfalse: hashes and sizes of the files are checked (verifying integrity of files)" )]
 		public bool CheckVersionOnly = true;
 
-		[Tooltip( "Is this app gonna update itself. If set to true, you'll need to generate a self patcher. See README for more info." )]
+		[Tooltip( "Is this app gonna update itself. If set to true, you'll need to generate a self patcher. See README for more info about self patchers" )]
 		public bool IsSelfPatchingApp = true;
 
 		[Tooltip( "Should the app be restarted by the self patcher after a successful update" )]

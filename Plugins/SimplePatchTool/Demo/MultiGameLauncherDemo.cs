@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool#multigamelauncherdemo" )]
+	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool/wiki/Multi-game-Launcher-Tutorial" )]
 	public class MultiGameLauncherDemo : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms

@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace SimplePatchToolUnity
 {
-	[HelpURL( "https://github.com/yasirkula/UnitySimplePatchTool" )]
 	public class PatcherUI : MonoBehaviour
 	{
 		// SimplePatchTool works on only standalone platforms
