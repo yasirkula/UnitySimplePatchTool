@@ -2,5 +2,6 @@
   "name": "com.yasirkula.simplepatchtool",
   "displayName": "Simple Patch Tool",
   "version": "1.6.0",
-  "description": "SimplePatchTool is a general-purpose patcher library for standalone applications.\n\nCurrently, this library is only tested on a 64-bit Windows 10 installment. Please note that SimplePatchTool is not yet battle tested thoroughly, so you may encounter unknown issues while integrating it into your projects. Don't hesitate to open an Issue on GitHub when you encounter one!"
+  "description": "SimplePatchTool is a general-purpose patcher library for standalone applications.\n\nCurrently, this library is only tested on a 64-bit Windows 10 installment. Please note that SimplePatchTool is not yet battle tested thoroughly, so you may encounter unknown issues while integrating it into your projects. Don't hesitate to open an Issue on GitHub when you encounter one!",
+  "hideInEditor": false
 }
