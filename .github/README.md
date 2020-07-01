@@ -1,5 +1,9 @@
 # Simple Patch Tool for Unity
 
+### THIS PROJECT IS NO LONGER MAINTAINED.
+
+---
+
 ![screenshot](Images/launcher-demo.png)
 
 **Available on Asset Store:** https://assetstore.unity.com/packages/tools/network/simple-patch-tool-124296
